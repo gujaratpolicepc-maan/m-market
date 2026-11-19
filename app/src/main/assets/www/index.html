@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>M-Market</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <span class="logo">📈</span>
+    <div>
+      <div class="title">M-Market</div>
+      <div class="sub" id="updated">લોડ થઈ રહ્યું છે…</div>
+    </div>
+  </div>
+  <div class="top-actions">
+    <button class="icon-btn" id="btnRefresh" aria-label="Refresh">⟳</button>
+    <button class="icon-btn" id="btnInfo" aria-label="Info">⚙</button>
+  </div>
+</header>
+
+<div id="updateBar" class="update-bar hidden"></div>
+<div id="errBar" class="err-bar hidden"></div>
+
+<main id="view"></main>
+
+<nav class="tabs">
+  <button data-tab="home" class="active"><span>🏠</span>હોમ</button>
+  <button data-tab="news"><span>📰</span>સમાચાર</button>
+  <button data-tab="global"><span>🌍</span>ગ્લોબલ</button>
+  <button data-tab="stocks"><span>🔍</span>શેર</button>
+  <button data-tab="sectors"><span>📊</span>સેક્ટર</button>
+</nav>
+
+<div id="sheet" class="sheet hidden">
+  <div class="sheet-card">
+    <div class="sheet-head"><b id="sheetTitle"></b><button class="icon-btn" id="sheetClose">✕</button></div>
+    <div id="sheetBody"></div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
