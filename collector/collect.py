@@ -130,8 +130,20 @@ def norm_title(t):
     return re.sub(r"[^\wऀ-ॿ]+", " ", t.lower()).strip()
 
 
+FIN_RX = re.compile(
+    r"(share|stock|market|sensex|nifty|ipo|profit|revenue|earning|quarter|q[1-4]|fii|dii|sebi|rbi|"
+    r"rupee|crude|gold|bond|yield|inflation|gdp|fed|tariff|dividend|bank|fund|invest|trade|economy|"
+    r"शेयर|बाजार|बाज़ार|सेंसेक्स|निफ्टी|स्टॉक|आईपीओ|मुनाफा|मुनाफ़ा|कंपनी|निवेश|रुपया|रुपये|सोना|चांदी|क्रूड|"
+    r"बैंक|फंड|डिविडेंड|तिमाही|नतीजे|कारोबार|अर्थव्यवस्था|महंगाई|आरबीआई|सेबी|टैरिफ)", re.I)
+
+
 def fetch_feed(feed):
-    r = HTTP.get(feed["url"], timeout=25)
+    for attempt in range(3):
+        r = HTTP.get(feed["url"], timeout=25)
+        if r.status_code in (429, 502, 503) and attempt < 2:
+            time.sleep(6 * (attempt + 1))
+            continue
+        break
     r.raise_for_status()
     parsed = feedparser.parse(r.content)
     out = []
@@ -145,6 +157,8 @@ def fetch_feed(feed):
             if m:
                 src = m.group(1).strip()
                 title = title[: m.start()].strip()
+        if feed.get("filter") and not FIN_RX.search(title):
+            continue
         out.append({
             "title": title,
             "desc": clean_html(e.get("summary", ""))[:400],
@@ -239,6 +253,8 @@ def collect_news(sources, prev, stocks, sector_kw):
             fresh.extend(items)
             status.append({"name": feed["name"], "ok": True, "count": len(items),
                            "ms": int((time.time() - t0) * 1000)})
+            if "news.google.com" in feed["url"]:
+                time.sleep(2)  # Google News rate-limits fast repeated calls
         except Exception as e:  # keep going
             status.append({"name": feed["name"], "ok": False, "error": str(e)[:120]})
             log("feed failed", feed["name"], e)
@@ -276,41 +292,162 @@ def collect_news(sources, prev, stocks, sector_kw):
 
 
 # --------------------------------------------------------------------------
-# Markets (Yahoo Finance public chart endpoint)
+# Markets: NSE (India + sectors) -> Yahoo (batch, with cookie/crumb) -> Stooq
+# Yahoo often rate-limits GitHub servers, so several sources are tried.
 # --------------------------------------------------------------------------
-def fetch_quote(sym):
-    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{requests.utils.quote(sym)}"
-    r = HTTP.get(url, params={"range": "5d", "interval": "1d"}, timeout=20)
+NSE_NAMES = {  # our name -> NSE allIndices "index"
+    "Nifty 50": "NIFTY 50", "Bank Nifty": "NIFTY BANK", "India VIX": "INDIA VIX",
+    "IT": "NIFTY IT", "Banking": "NIFTY BANK", "Auto": "NIFTY AUTO", "Pharma": "NIFTY PHARMA",
+    "FMCG": "NIFTY FMCG", "Metal": "NIFTY METAL", "Realty": "NIFTY REALTY", "Energy": "NIFTY ENERGY",
+    "PSU Bank": "NIFTY PSU BANK", "Media": "NIFTY MEDIA", "Financial Services": "NIFTY FINANCIAL SERVICES",
+}
+STOOQ = {  # yahoo symbol -> stooq symbol
+    "^GSPC": "^spx", "^IXIC": "^ndq", "^DJI": "^dji", "^N225": "^nkx", "^HSI": "^hsi",
+    "^FTSE": "^ukx", "^GDAXI": "^dax", "ES=F": "es.f", "NQ=F": "nq.f", "YM=F": "ym.f",
+    "BZ=F": "cb.f", "GC=F": "gc.f", "INR=X": "usdinr", "DX-Y.NYB": "dx.f", "^TNX": "10usy.b",
+    "^BSESN": "^sensex",
+}
+
+
+def _q(price, prev, ts=None, closes=None):
+    if price is None or not prev:
+        return None
+    return {"price": round(float(price), 4), "prev": round(float(prev), 4),
+            "pct": round((float(price) - float(prev)) / float(prev) * 100, 2),
+            "time": ts or now_utc().isoformat(), "spark": [round(c, 2) for c in (closes or [])[-5:]]}
+
+
+def nse_indices():
+    s = requests.Session()
+    s.headers.update({"User-Agent": UA, "Accept": "application/json",
+                      "Referer": "https://www.nseindia.com/market-data/live-market-indices"})
+    s.get("https://www.nseindia.com/", timeout=15)
+    r = s.get("https://www.nseindia.com/api/allIndices", timeout=15)
     r.raise_for_status()
-    res = r.json()["chart"]["result"][0]
-    meta = res["meta"]
-    price = meta.get("regularMarketPrice")
-    closes = [c for c in (res.get("indicators", {}).get("quote", [{}])[0].get("close") or []) if c]
-    prev = closes[-2] if len(closes) >= 2 else meta.get("chartPreviousClose")
-    pct = (price - prev) / prev * 100 if (price and prev) else None
-    ts = meta.get("regularMarketTime")
-    return {
-        "price": round(price, 4) if price else None,
-        "prev": round(prev, 4) if prev else None,
-        "pct": round(pct, 2) if pct is not None else None,
-        "time": datetime.fromtimestamp(ts, timezone.utc).isoformat() if ts else None,
-        "spark": [round(c, 2) for c in closes[-5:]],
-    }
+    out = {}
+    for row in r.json().get("data", []):
+        q = _q(row.get("last"), row.get("previousClose"))
+        if q:
+            out[row.get("index", "").upper()] = q
+    return out
 
 
-def collect_markets(sources):
+def yahoo_batch(symbols):
+    s = requests.Session()
+    s.headers.update({"User-Agent": UA})
+    crumb = ""
+    try:
+        s.get("https://fc.yahoo.com", timeout=10)
+        c = s.get("https://query2.finance.yahoo.com/v1/test/getcrumb", timeout=10)
+        if c.status_code == 200 and len(c.text) < 40:
+            crumb = c.text.strip()
+    except Exception:
+        pass
+    out = {}
+    for i in range(0, len(symbols), 20):
+        chunk = symbols[i:i + 20]
+        params = {"symbols": ",".join(chunk), "range": "5d", "interval": "1d"}
+        if crumb:
+            params["crumb"] = crumb
+        r = s.get("https://query2.finance.yahoo.com/v7/finance/spark", params=params, timeout=20)
+        r.raise_for_status()
+        js = r.json()
+        rows = js.get("spark", {}).get("result") if isinstance(js.get("spark"), dict) else None
+        if rows:  # old shape
+            for row in rows:
+                resp = (row.get("response") or [{}])[0]
+                meta = resp.get("meta", {})
+                closes = [c for c in (resp.get("indicators", {}).get("quote", [{}])[0].get("close") or []) if c]
+                price = meta.get("regularMarketPrice") or (closes[-1] if closes else None)
+                prev = closes[-2] if len(closes) >= 2 else meta.get("chartPreviousClose")
+                ts = meta.get("regularMarketTime")
+                q = _q(price, prev, datetime.fromtimestamp(ts, timezone.utc).isoformat() if ts else None, closes)
+                if q:
+                    out[row.get("symbol")] = q
+        else:  # new shape: {"SYM": {"close": [...], "timestamp": [...], "chartPreviousClose": x}}
+            for sym, row in js.items():
+                if not isinstance(row, dict):
+                    continue
+                closes = [c for c in (row.get("close") or []) if c]
+                ts = (row.get("timestamp") or [None])[-1]
+                q = _q(closes[-1] if closes else None, closes[-2] if len(closes) >= 2 else row.get("chartPreviousClose"),
+                       datetime.fromtimestamp(ts, timezone.utc).isoformat() if ts else None, closes)
+                if q:
+                    out[sym] = q
+        time.sleep(1)
+    return out
+
+
+def stooq_quote(sym):
+    r = HTTP.get("https://stooq.com/q/d/l/", params={"s": sym, "i": "d"}, timeout=15)
+    r.raise_for_status()
+    lines = [l for l in r.text.strip().splitlines() if l and l[0].isdigit()]
+    if len(lines) < 2:
+        raise ValueError("no data")
+    last, prev = lines[-1].split(","), lines[-2].split(",")
+    closes = [float(l.split(",")[4]) for l in lines[-5:]]
+    return _q(float(last[4]), float(prev[4]), last[0] + "T16:00:00+00:00", closes)
+
+
+def collect_markets(sources, prev_markets=None):
     out, status = {}, []
-    for group, lst in sources["markets"].items():
-        out[group] = []
-        for m in lst:
+    got = {}  # yahoo symbol -> quote
+    # 1) NSE for Indian indices & sectors
+    nse = {}
+    try:
+        nse = nse_indices()
+        status.append({"name": "NSE indices", "ok": True, "count": len(nse)})
+    except Exception as e:
+        status.append({"name": "NSE indices", "ok": False, "error": str(e)[:100]})
+        log("nse failed", e)
+    all_items = [(g, m) for g, lst in sources["markets"].items() for m in lst]
+    for g, m in all_items:
+        key = NSE_NAMES.get(m["name"])
+        if key and key in nse:
+            got[m["sym"]] = nse[key]
+    # 2) Yahoo batch for the rest
+    need = sorted({m["sym"] for _, m in all_items if m["sym"] not in got})
+    if need:
+        try:
+            y = yahoo_batch(need)
+            got.update({k: v for k, v in y.items() if k in need})
+            status.append({"name": "Yahoo Finance", "ok": bool(y), "count": len(y)})
+        except Exception as e:
+            status.append({"name": "Yahoo Finance", "ok": False, "error": str(e)[:100]})
+            log("yahoo failed", e)
+    # 3) Stooq for whatever is still missing
+    need = [s for s in need if s not in got and s in STOOQ]
+    if need:
+        n_ok, err = 0, ""
+        for sym in need:
             try:
-                q = fetch_quote(m["sym"])
-                q.update({"sym": m["sym"], "name": m["name"], "w": m.get("w", 0)})
-                out[group].append(q)
+                q = stooq_quote(STOOQ[sym])
+                if q:
+                    got[sym] = q
+                    n_ok += 1
             except Exception as e:
-                status.append({"name": m["name"], "ok": False, "error": str(e)[:100]})
-                log("quote failed", m["sym"], e)
-            time.sleep(0.25)
+                err = str(e)[:100]
+            time.sleep(0.3)
+        status.append({"name": "Stooq", "ok": n_ok > 0, "count": n_ok, **({"error": err} if not n_ok else {})})
+    # 4) keep last known value (marked stale) for anything still missing
+    prev_by_sym = {q["sym"]: q for lst in (prev_markets or {}).values() for q in lst}
+    missing = []
+    for g, lst in sources["markets"].items():
+        out[g] = []
+        for m in lst:
+            q = got.get(m["sym"])
+            if q:
+                q = dict(q)
+            elif m["sym"] in prev_by_sym:
+                q = dict(prev_by_sym[m["sym"]])
+                q["stale"] = True
+            else:
+                missing.append(m["name"])
+                continue
+            q.update({"sym": m["sym"], "name": m["name"], "w": m.get("w", 0)})
+            out[g].append(q)
+    if missing:
+        status.append({"name": "ભાવ ન મળ્યા", "ok": False, "error": ", ".join(missing)[:150]})
     return out, status
 
 
@@ -363,7 +500,7 @@ def global_score(markets):
     for grp in ("global", "macro"):
         for q in markets.get(grp, []):
             w, p = q.get("w", 0), q.get("pct")
-            if not w or p is None:
+            if not w or p is None or q.get("stale"):
                 continue
             num += w * max(-3, min(3, p))
             den += abs(w)
@@ -663,10 +800,7 @@ def main():
     session, phase = target_session(now_ist)
 
     news, feed_status = collect_news(sources, prev, stocks, sector_kw)
-    markets, mkt_status = collect_markets(sources)
-    if not any(markets.values()) and prev.get("markets"):
-        markets = prev["markets"]  # keep last good numbers
-        mkt_status.append({"name": "markets", "ok": False, "error": "using previous data"})
+    markets, mkt_status = collect_markets(sources, prev.get("markets"))
     fii = collect_fii_dii() or prev.get("fii_dii")
 
     ai, ai_status = run_ai(news, markets, prev, session, phase, now_ist)

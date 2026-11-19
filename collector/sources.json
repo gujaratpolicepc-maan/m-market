@@ -1,68 +1,280 @@
 {
-  "_note": "News RSS feeds. Add/remove freely. lang: en / hi. region: india / global.",
-  "feeds": [
-    {"name": "ET Markets", "lang": "en", "region": "india", "url": "https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms"},
-    {"name": "ET Stocks News", "lang": "en", "region": "india", "url": "https://economictimes.indiatimes.com/markets/stocks/news/rssfeeds/2146842.cms"},
-    {"name": "Moneycontrol Markets", "lang": "en", "region": "india", "url": "https://www.moneycontrol.com/rss/marketreports.xml"},
-    {"name": "Moneycontrol Business", "lang": "en", "region": "india", "url": "https://www.moneycontrol.com/rss/business.xml"},
-    {"name": "Livemint Markets", "lang": "en", "region": "india", "url": "https://www.livemint.com/rss/markets"},
-    {"name": "Business Standard Markets", "lang": "en", "region": "india", "url": "https://www.business-standard.com/rss/markets-106.rss"},
-    {"name": "CNBC-TV18 Market", "lang": "en", "region": "india", "url": "https://www.cnbctv18.com/commonfeeds/v1/cne/rss/market.xml"},
-    {"name": "Google News: Indian stock market", "lang": "en", "region": "india", "url": "https://news.google.com/rss/search?q=sensex+OR+nifty+stocks+when:1d&hl=en-IN&gl=IN&ceid=IN:en"},
-
-    {"name": "Zee Business Hindi", "lang": "hi", "region": "india", "url": "https://news.google.com/rss/search?q=site:zeebiz.com/hindi+%E0%A4%B6%E0%A5%87%E0%A4%AF%E0%A4%B0+when:1d&hl=hi&gl=IN&ceid=IN:hi"},
-    {"name": "CNBC Awaaz", "lang": "hi", "region": "india", "url": "https://news.google.com/rss/search?q=site:hindi.cnbctv18.com+when:1d&hl=hi&gl=IN&ceid=IN:hi"},
-    {"name": "Moneycontrol Hindi", "lang": "hi", "region": "india", "url": "https://news.google.com/rss/search?q=site:hindi.moneycontrol.com+when:1d&hl=hi&gl=IN&ceid=IN:hi"},
-    {"name": "Google News: शेयर बाजार", "lang": "hi", "region": "india", "url": "https://news.google.com/rss/search?q=%E0%A4%B6%E0%A5%87%E0%A4%AF%E0%A4%B0+%E0%A4%AC%E0%A4%BE%E0%A4%9C%E0%A4%BE%E0%A4%B0+when:1d&hl=hi&gl=IN&ceid=IN:hi"},
-
-    {"name": "CNBC Top News", "lang": "en", "region": "global", "url": "https://www.cnbc.com/id/100003114/device/rss/rss.html"},
-    {"name": "CNBC Finance", "lang": "en", "region": "global", "url": "https://www.cnbc.com/id/10000664/device/rss/rss.html"},
-    {"name": "CNBC Economy", "lang": "en", "region": "global", "url": "https://www.cnbc.com/id/20910258/device/rss/rss.html"},
-    {"name": "Yahoo Finance", "lang": "en", "region": "global", "url": "https://finance.yahoo.com/news/rssindex"},
-    {"name": "Google News: Wall Street", "lang": "en", "region": "global", "url": "https://news.google.com/rss/search?q=wall+street+stocks+when:1d&hl=en-US&gl=US&ceid=US:en"},
-    {"name": "Google News: Fed / rates", "lang": "en", "region": "global", "url": "https://news.google.com/rss/search?q=federal+reserve+rates+when:1d&hl=en-US&gl=US&ceid=US:en"},
-    {"name": "Google News: Crude oil", "lang": "en", "region": "global", "url": "https://news.google.com/rss/search?q=crude+oil+prices+when:1d&hl=en-US&gl=US&ceid=US:en"},
-    {"name": "Google News: Asian markets", "lang": "en", "region": "global", "url": "https://news.google.com/rss/search?q=asian+markets+stocks+when:1d&hl=en-US&gl=US&ceid=US:en"}
-  ],
-  "markets": {
-    "india": [
-      {"sym": "^NSEI", "name": "Nifty 50"},
-      {"sym": "^BSESN", "name": "Sensex"},
-      {"sym": "^NSEBANK", "name": "Bank Nifty"},
-      {"sym": "^INDIAVIX", "name": "India VIX"}
-    ],
-    "global": [
-      {"sym": "ES=F", "name": "S&P 500 Futures", "w": 1.5},
-      {"sym": "NQ=F", "name": "Nasdaq Futures", "w": 1.0},
-      {"sym": "YM=F", "name": "Dow Futures", "w": 0.8},
-      {"sym": "^GSPC", "name": "S&P 500", "w": 1.0},
-      {"sym": "^IXIC", "name": "Nasdaq", "w": 0.7},
-      {"sym": "^DJI", "name": "Dow Jones", "w": 0.5},
-      {"sym": "^N225", "name": "Nikkei 225", "w": 0.8},
-      {"sym": "^HSI", "name": "Hang Seng", "w": 0.6},
-      {"sym": "^FTSE", "name": "FTSE 100", "w": 0.4},
-      {"sym": "^GDAXI", "name": "DAX", "w": 0.4}
-    ],
-    "macro": [
-      {"sym": "BZ=F", "name": "Brent Crude", "w": -1.0},
-      {"sym": "GC=F", "name": "Gold", "w": 0.0},
-      {"sym": "INR=X", "name": "USD/INR", "w": -2.0},
-      {"sym": "DX-Y.NYB", "name": "Dollar Index", "w": -1.0},
-      {"sym": "^TNX", "name": "US 10Y Yield", "w": -0.8},
-      {"sym": "^VIX", "name": "US VIX", "w": -0.3}
-    ],
-    "sectors": [
-      {"sym": "^CNXIT", "name": "IT"},
-      {"sym": "^NSEBANK", "name": "Banking"},
-      {"sym": "^CNXAUTO", "name": "Auto"},
-      {"sym": "^CNXPHARMA", "name": "Pharma"},
-      {"sym": "^CNXFMCG", "name": "FMCG"},
-      {"sym": "^CNXMETAL", "name": "Metal"},
-      {"sym": "^CNXREALTY", "name": "Realty"},
-      {"sym": "^CNXENERGY", "name": "Energy"},
-      {"sym": "^CNXPSUBANK", "name": "PSU Bank"},
-      {"sym": "^CNXMEDIA", "name": "Media"},
-      {"sym": "NIFTY_FIN_SERVICE.NS", "name": "Financial Services"}
-    ]
+ "_note": "News RSS feeds. Add/remove freely. lang: en / hi. region: india / global.",
+ "feeds": [
+  {
+   "name": "ET Markets",
+   "lang": "en",
+   "region": "india",
+   "url": "https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms"
+  },
+  {
+   "name": "ET Stocks News",
+   "lang": "en",
+   "region": "india",
+   "url": "https://economictimes.indiatimes.com/markets/stocks/news/rssfeeds/2146842.cms"
+  },
+  {
+   "name": "Moneycontrol Markets",
+   "lang": "en",
+   "region": "india",
+   "url": "https://www.moneycontrol.com/rss/marketreports.xml"
+  },
+  {
+   "name": "Moneycontrol Business",
+   "lang": "en",
+   "region": "india",
+   "url": "https://www.moneycontrol.com/rss/business.xml"
+  },
+  {
+   "name": "Livemint Markets",
+   "lang": "en",
+   "region": "india",
+   "url": "https://www.livemint.com/rss/markets"
+  },
+  {
+   "name": "Business Standard Markets",
+   "lang": "en",
+   "region": "india",
+   "url": "https://www.business-standard.com/rss/markets-106.rss"
+  },
+  {
+   "name": "CNBC-TV18 Market",
+   "lang": "en",
+   "region": "india",
+   "url": "https://www.cnbctv18.com/commonfeeds/v1/cne/rss/market.xml"
+  },
+  {
+   "name": "Google News: Indian stock market",
+   "lang": "en",
+   "region": "india",
+   "url": "https://news.google.com/rss/search?q=sensex+OR+nifty+stocks+when:1d&hl=en-IN&gl=IN&ceid=IN:en"
+  },
+  {
+   "name": "Zee Business Hindi",
+   "lang": "hi",
+   "region": "india",
+   "url": "https://news.google.com/rss/search?q=site:zeebiz.com/hindi+%E0%A4%B6%E0%A5%87%E0%A4%AF%E0%A4%B0+when:1d&hl=hi&gl=IN&ceid=IN:hi",
+   "filter": true
+  },
+  {
+   "name": "CNBC Awaaz",
+   "lang": "hi",
+   "region": "india",
+   "url": "https://news.google.com/rss/search?q=site:hindi.cnbctv18.com+when:1d&hl=hi&gl=IN&ceid=IN:hi",
+   "filter": true
+  },
+  {
+   "name": "Moneycontrol Hindi",
+   "lang": "hi",
+   "region": "india",
+   "url": "https://news.google.com/rss/search?q=site:hindi.moneycontrol.com+when:1d&hl=hi&gl=IN&ceid=IN:hi",
+   "filter": true
+  },
+  {
+   "name": "Google News: शेयर बाजार",
+   "lang": "hi",
+   "region": "india",
+   "url": "https://news.google.com/rss/search?q=%E0%A4%B6%E0%A5%87%E0%A4%AF%E0%A4%B0+%E0%A4%AC%E0%A4%BE%E0%A4%9C%E0%A4%BE%E0%A4%B0+when:1d&hl=hi&gl=IN&ceid=IN:hi",
+   "filter": true
+  },
+  {
+   "name": "CNBC Top News",
+   "lang": "en",
+   "region": "global",
+   "url": "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+   "filter": true
+  },
+  {
+   "name": "CNBC Finance",
+   "lang": "en",
+   "region": "global",
+   "url": "https://www.cnbc.com/id/10000664/device/rss/rss.html"
+  },
+  {
+   "name": "CNBC Economy",
+   "lang": "en",
+   "region": "global",
+   "url": "https://www.cnbc.com/id/20910258/device/rss/rss.html"
+  },
+  {
+   "name": "Google News: Global markets",
+   "lang": "en",
+   "region": "global",
+   "url": "https://news.google.com/rss/search?q=global+markets+stocks+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+   "name": "Google News: Wall Street",
+   "lang": "en",
+   "region": "global",
+   "url": "https://news.google.com/rss/search?q=wall+street+stocks+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+   "name": "Google News: Fed / rates",
+   "lang": "en",
+   "region": "global",
+   "url": "https://news.google.com/rss/search?q=federal+reserve+rates+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+   "name": "Google News: Crude oil",
+   "lang": "en",
+   "region": "global",
+   "url": "https://news.google.com/rss/search?q=crude+oil+prices+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+   "name": "Google News: Asian markets",
+   "lang": "en",
+   "region": "global",
+   "url": "https://news.google.com/rss/search?q=asian+markets+stocks+when:1d&hl=en-US&gl=US&ceid=US:en"
   }
+ ],
+ "markets": {
+  "india": [
+   {
+    "sym": "^NSEI",
+    "name": "Nifty 50"
+   },
+   {
+    "sym": "^BSESN",
+    "name": "Sensex"
+   },
+   {
+    "sym": "^NSEBANK",
+    "name": "Bank Nifty"
+   },
+   {
+    "sym": "^INDIAVIX",
+    "name": "India VIX"
+   }
+  ],
+  "global": [
+   {
+    "sym": "ES=F",
+    "name": "S&P 500 Futures",
+    "w": 1.5
+   },
+   {
+    "sym": "NQ=F",
+    "name": "Nasdaq Futures",
+    "w": 1.0
+   },
+   {
+    "sym": "YM=F",
+    "name": "Dow Futures",
+    "w": 0.8
+   },
+   {
+    "sym": "^GSPC",
+    "name": "S&P 500",
+    "w": 1.0
+   },
+   {
+    "sym": "^IXIC",
+    "name": "Nasdaq",
+    "w": 0.7
+   },
+   {
+    "sym": "^DJI",
+    "name": "Dow Jones",
+    "w": 0.5
+   },
+   {
+    "sym": "^N225",
+    "name": "Nikkei 225",
+    "w": 0.8
+   },
+   {
+    "sym": "^HSI",
+    "name": "Hang Seng",
+    "w": 0.6
+   },
+   {
+    "sym": "^FTSE",
+    "name": "FTSE 100",
+    "w": 0.4
+   },
+   {
+    "sym": "^GDAXI",
+    "name": "DAX",
+    "w": 0.4
+   }
+  ],
+  "macro": [
+   {
+    "sym": "BZ=F",
+    "name": "Brent Crude",
+    "w": -1.0
+   },
+   {
+    "sym": "GC=F",
+    "name": "Gold",
+    "w": 0.0
+   },
+   {
+    "sym": "INR=X",
+    "name": "USD/INR",
+    "w": -2.0
+   },
+   {
+    "sym": "DX-Y.NYB",
+    "name": "Dollar Index",
+    "w": -1.0
+   },
+   {
+    "sym": "^TNX",
+    "name": "US 10Y Yield",
+    "w": -0.8
+   },
+   {
+    "sym": "^VIX",
+    "name": "US VIX",
+    "w": -0.3
+   }
+  ],
+  "sectors": [
+   {
+    "sym": "^CNXIT",
+    "name": "IT"
+   },
+   {
+    "sym": "^NSEBANK",
+    "name": "Banking"
+   },
+   {
+    "sym": "^CNXAUTO",
+    "name": "Auto"
+   },
+   {
+    "sym": "^CNXPHARMA",
+    "name": "Pharma"
+   },
+   {
+    "sym": "^CNXFMCG",
+    "name": "FMCG"
+   },
+   {
+    "sym": "^CNXMETAL",
+    "name": "Metal"
+   },
+   {
+    "sym": "^CNXREALTY",
+    "name": "Realty"
+   },
+   {
+    "sym": "^CNXENERGY",
+    "name": "Energy"
+   },
+   {
+    "sym": "^CNXPSUBANK",
+    "name": "PSU Bank"
+   },
+   {
+    "sym": "^CNXMEDIA",
+    "name": "Media"
+   },
+   {
+    "sym": "NIFTY_FIN_SERVICE.NS",
+    "name": "Financial Services"
+   }
+  ]
+ }
 }
