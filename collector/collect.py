@@ -309,6 +309,50 @@ STOOQ = {  # yahoo symbol -> stooq symbol
 }
 
 
+CNBC = {  # yahoo symbol -> CNBC quote symbol
+    "^GSPC": ".SPX", "^IXIC": ".IXIC", "^DJI": ".DJI", "ES=F": "@SP.1", "NQ=F": "@ND.1", "YM=F": "@DJ.1",
+    "^N225": ".N225", "^HSI": ".HSI", "^FTSE": ".FTSE", "^GDAXI": ".GDAXI", "BZ=F": "@LCO.1",
+    "GC=F": "@GC.1", "INR=X": "INR=", "DX-Y.NYB": ".DXY", "^TNX": "US10Y", "^VIX": ".VIX",
+    "^BSESN": ".BSESN",
+}
+
+
+def _num(v):
+    try:
+        return float(str(v).replace(",", "").replace("%", "").replace("+", "").strip())
+    except Exception:
+        return None
+
+
+def cnbc_batch(yahoo_syms):
+    want = {CNBC[s]: s for s in yahoo_syms if s in CNBC}
+    if not want:
+        return {}
+    r = HTTP.get("https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol",
+                 params={"symbols": "|".join(want), "requestMethod": "itv", "noform": "1",
+                         "partnerId": "2", "fund": "1", "exthrs": "1", "output": "json", "events": "1"},
+                 timeout=20)
+    r.raise_for_status()
+    rows = r.json().get("FormattedQuoteResult", {}).get("FormattedQuote", [])
+    if isinstance(rows, dict):
+        rows = [rows]
+    out = {}
+    for row in rows:
+        ysym = want.get(row.get("symbol"))
+        last, prev = _num(row.get("last")), _num(row.get("previous_day_closing"))
+        pct = _num(row.get("change_pct"))
+        if ysym is None or last is None:
+            continue
+        if not prev and pct is not None and pct != -100:
+            prev = last / (1 + pct / 100)
+        q = _q(last, prev)
+        if q:
+            if pct is not None:
+                q["pct"] = round(pct, 2)
+            out[ysym] = q
+    return out
+
+
 def _q(price, prev, ts=None, closes=None):
     if price is None or not prev:
         return None
@@ -405,7 +449,17 @@ def collect_markets(sources, prev_markets=None):
         key = NSE_NAMES.get(m["name"])
         if key and key in nse:
             got[m["sym"]] = nse[key]
-    # 2) Yahoo batch for the rest
+    # 2) CNBC (works from cloud servers, no key)
+    need = sorted({m["sym"] for _, m in all_items if m["sym"] not in got})
+    if need:
+        try:
+            cq = cnbc_batch(need)
+            got.update(cq)
+            status.append({"name": "CNBC quotes", "ok": bool(cq), "count": len(cq)})
+        except Exception as e:
+            status.append({"name": "CNBC quotes", "ok": False, "error": str(e)[:100]})
+            log("cnbc failed", e)
+    # 3) Yahoo batch for the rest
     need = sorted({m["sym"] for _, m in all_items if m["sym"] not in got})
     if need:
         try:
@@ -415,7 +469,7 @@ def collect_markets(sources, prev_markets=None):
         except Exception as e:
             status.append({"name": "Yahoo Finance", "ok": False, "error": str(e)[:100]})
             log("yahoo failed", e)
-    # 3) Stooq for whatever is still missing
+    # 4) Stooq for whatever is still missing
     need = [s for s in need if s not in got and s in STOOQ]
     if need:
         n_ok, err = 0, ""
@@ -429,7 +483,7 @@ def collect_markets(sources, prev_markets=None):
                 err = str(e)[:100]
             time.sleep(0.3)
         status.append({"name": "Stooq", "ok": n_ok > 0, "count": n_ok, **({"error": err} if not n_ok else {})})
-    # 4) keep last known value (marked stale) for anything still missing
+    # 5) keep last known value (marked stale) for anything still missing
     prev_by_sym = {q["sym"]: q for lst in (prev_markets or {}).values() for q in lst}
     missing = []
     for g, lst in sources["markets"].items():
