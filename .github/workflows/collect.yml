@@ -1,0 +1,59 @@
+name: Collect market data
+
+on:
+  schedule:
+    # Times are UTC. IST = UTC + 5:30
+    - cron: "*/20 2-10 * * 1-5"     # every 20 min, 07:30–16:30 IST, Mon–Fri (market hours)
+    - cron: "15 11-23/2 * * *"      # every 2 h in the evening / night (US market, global news)
+    - cron: "15 0,1 * * *"          # early morning IST (US close, Asia open)
+  workflow_dispatch:
+    inputs:
+      force_ai:
+        description: "AI એનાલિસિસ હમણાં જ ફરી કરો (1 = હા)"
+        required: false
+        default: "0"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: collect
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get previous data
+        run: |
+          mkdir -p out
+          git fetch --depth=1 origin data:data 2>/dev/null && git show data:latest.json > out/latest.json 2>/dev/null || echo "first run - no previous data"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: pip install requests feedparser
+
+      - name: Collect & analyse
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODELS: ${{ vars.GEMINI_MODELS }}
+          AI_MIN_INTERVAL_MIN: ${{ vars.AI_MIN_INTERVAL_MIN }}
+          AI_FORCE: ${{ github.event.inputs.force_ai }}
+        run: python collector/collect.py --out out
+
+      - name: Publish to 'data' branch
+        run: |
+          cd out
+          rm -f latest.json.tmp
+          git init -q -b data
+          git config user.name "m-market-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add latest.json
+          git commit -q -m "data $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" data
