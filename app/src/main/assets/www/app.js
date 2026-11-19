@@ -73,7 +73,8 @@
       ideaWait: function (n, i) { return "સ્પષ્ટ દિશા નથી — ઓપ્શન ખરીદવાનું ટાળો (ટાઇમ ડીકે નુકસાન કરે). " + n + " " + (i.trigger_up || "—") + " ઉપર તૂટે તો કોલ, " + (i.trigger_down || "—") + " નીચે તૂટે તો પુટ પર નજર રાખો."; },
       premAsOf: "પ્રીમિયમ ડેટા સમય", premNote: "લાઇવ ભાવ અલગ હશે — ઓર્ડર પહેલાં ચેક કરો.", stale: "⏳ જૂનો ડેટા (NSE થી નવો ડેટા ન મળ્યો)",
       foStocks: "📌 સમાચાર આધારિત F&O શેર", foNoData: "ઓપ્શન ચેઇન ડેટા હજુ મળ્યો નથી. આગળના અપડેટમાં આવશે.", foHist: "🎯 F&O દિશા કેટલી સાચી પડી?",
-      confT: "વિશ્વાસ", aiView: "🤖 AI વ્યૂ"
+      confT: "વિશ્વાસ", aiView: "🤖 AI વ્યૂ",
+      bseNote: "BSE ઓપ્શન ચેઇન (Sensex/BANKEX) BSE ની સાઇટ GitHub ના સર્વરને બ્લોક કરે છે, તેથી મફતમાં મળતી નથી. તમારા બ્રોકર (Angel One / Dhan / Upstox / Zerodha) ના API થી જોડાણ કરીએ તો લાઇવ ભાવ સાથે ઉમેરી શકાય."
     },
     en: {
       loading: "Loading…", updated: "Updated", now: "just now", minAgo: " min ago", hrAgo: " h ago", dayAgo: " d ago",
@@ -124,7 +125,8 @@
       ideaWait: function (n, i) { return "No clear direction — avoid buying options (time decay). Watch for a break above " + (i.trigger_up || "—") + " (calls) or below " + (i.trigger_down || "—") + " (puts)."; },
       premAsOf: "Premium data time", premNote: "Live prices will differ — check before placing an order.", stale: "⏳ Old data (no fresh data from NSE)",
       foStocks: "📌 News-driven F&O stocks", foNoData: "Option-chain data not available yet. It will appear in a later update.", foHist: "🎯 How accurate was the F&O direction?",
-      confT: "Confidence", aiView: "🤖 AI view"
+      confT: "Confidence", aiView: "🤖 AI view",
+      bseNote: "The BSE option chain (Sensex/BANKEX) is not available for free because BSE blocks GitHub servers. It can be added with live prices by connecting your broker's API (Angel One / Dhan / Upstox / Zerodha)."
     }
   };
   function t(k) { return T[state.lang][k]; }
@@ -261,7 +263,7 @@
   }
 
   function renderHome(d) {
-    var h = moodCard(d), ai = d.ai || null;
+    var h = indexStrip(d) + moodCard(d), ai = d.ai || null;
     var summ = tx(ai, "summary");
     if (summ) h += "<div class='card'><h3>" + t("summary") + "</h3><div>" + esc(summ) + "</div><div class='muted small' style='margin-top:6px'>" + t("aiUpd") + ": " + ago(ai.generated_at) + "</div></div>";
     var reasons = [];
@@ -271,8 +273,6 @@
     }
     (d.outlook && d.outlook.reasons || []).forEach(function (r) { reasons.push({ type: r.type, text: r[state.lang] || r.text }); });
     if (reasons.length) h += "<div class='card'><h3>" + t("reasons") + "</h3><ul class='reasons'>" + reasons.map(function (r) { return "<li class='" + esc(r.type) + "'>" + esc(r.text) + "</li>"; }).join("") + "</ul></div>";
-    var ind = (d.markets && d.markets.india) || [];
-    if (ind.length) h += "<div class='card'><h3>" + t("india") + "</h3><div class='grid'>" + ind.map(tile).join("") + "</div></div>";
     h += foMini(d);
     if (d.fii_dii && d.fii_dii.length) {
       h += "<div class='card'><h3>" + t("fii") + "</h3>" + d.fii_dii.map(function (r) {
@@ -290,6 +290,15 @@
     if (top.length) h += "<div class='card'><h3>" + t("bigNews") + "</h3>" + top.map(function (n) { return newsCard(n); }).join("") + "<button class='chip' data-tab-go='news'>" + t("allNews") + "</button></div>";
     h += historyCard(d, "ai", t("hist"));
     return h + "<div class='disc'>" + t("disc") + "</div>";
+  }
+
+  function indexStrip(d) {
+    var ind = (d.markets && d.markets.india) || [];
+    if (!ind.length) return "";
+    return "<div class='strip'>" + ind.map(function (q) {
+      var good = q.name.indexOf("VIX") >= 0 ? -(q.pct || 0) : (q.pct || 0);
+      return "<div class='chipq " + cls(good) + "'><div class='n'>" + esc(q.name) + (q.stale ? " ⏳" : "") + "</div><div class='v'>" + num(q.price) + "</div><div class='p " + cls(good) + "-t'>" + pct(q.pct) + "</div></div>";
+    }).join("") + "</div>";
   }
 
   function foMini(d) {
@@ -466,11 +475,14 @@
     return h + "</div>";
   }
   function renderFO(d) {
-    var h = "<div class='warn'>" + t("foWarn") + "</div>";
+    var h = indexStrip(d) + "<div class='warn'>" + t("foWarn") + "</div>";
     var opts = d.options || {}, aiFo = (d.ai && d.ai.fo) || {};
-    if (!opts.nifty && !opts.banknifty) h += "<div class='empty'>" + t("foNoData") + "</div>";
-    ["nifty", "banknifty"].forEach(function (k) { if (opts[k]) h += foCard(opts[k], aiFo[k]); });
-    if (opts.nifty || opts.banknifty) h += "<div class='muted small' style='margin:-4px 4px 12px'>" + t("premAsOf") + ": " + ago(d.generated_at) + ". " + t("premNote") + "</div>";
+    var keys = ["nifty", "banknifty", "finnifty", "midcpnifty"].filter(function (k) { return opts[k]; });
+    if (keys.length > 1) h += "<div class='chips'>" + keys.map(function (k) { return "<button class='chip' data-jump='fo-" + k + "'>" + esc(opts[k].name) + "</button>"; }).join("") + "<button class='chip' data-jump='fo-bse'>Sensex / BANKEX</button></div>";
+    if (!keys.length) h += "<div class='empty'>" + t("foNoData") + "</div>";
+    keys.forEach(function (k) { h += "<div id='fo-" + k + "'>" + foCard(opts[k], aiFo[k]) + "</div>"; });
+    h += "<div class='card' id='fo-bse'><h3>Sensex / BANKEX options (BSE)</h3><div class='muted'>" + t("bseNote") + "</div></div>";
+    if (keys.length) h += "<div class='muted small' style='margin:-4px 4px 12px'>" + t("premAsOf") + ": " + ago(d.generated_at) + ". " + t("premNote") + "</div>";
     var st = aiFo.stocks || [];
     if (st.length) {
       h += "<div class='card'><h3>" + t("foStocks") + "</h3>" + st.map(function (s) {
@@ -530,6 +542,7 @@
         if ($("view").contains(el) && state.tab === "stocks") render();
       };
     });
+    root.querySelectorAll("[data-jump]").forEach(function (el) { el.onclick = function () { var x = $(el.getAttribute("data-jump")); if (x) x.scrollIntoView({ behavior: "smooth", block: "start" }); }; });
     root.querySelectorAll("[data-tab-go]").forEach(function (el) { el.onclick = function () { closeSheet(); setTab(el.getAttribute("data-tab-go")); }; });
   }
   function bindView() {

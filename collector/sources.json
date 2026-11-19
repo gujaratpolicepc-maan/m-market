@@ -142,6 +142,30 @@
     "name": "Bank Nifty"
    },
    {
+    "sym": "BANKEX",
+    "name": "BANKEX"
+   },
+   {
+    "sym": "FINNIFTY",
+    "name": "Fin Nifty"
+   },
+   {
+    "sym": "MIDCPNIFTY",
+    "name": "Midcap Select"
+   },
+   {
+    "sym": "NIFTYNXT50",
+    "name": "Nifty Next 50"
+   },
+   {
+    "sym": "MIDCAP100",
+    "name": "Nifty Midcap 100"
+   },
+   {
+    "sym": "SMALLCAP100",
+    "name": "Nifty Smallcap 100"
+   },
+   {
     "sym": "^INDIAVIX",
     "name": "India VIX"
    }

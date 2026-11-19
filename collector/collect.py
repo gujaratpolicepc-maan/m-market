@@ -306,6 +306,8 @@ def collect_news(sources, prev, stocks, sector_kw):
 # --------------------------------------------------------------------------
 NSE_NAMES = {  # our name -> NSE allIndices "index"
     "Nifty 50": "NIFTY 50", "Bank Nifty": "NIFTY BANK", "India VIX": "INDIA VIX",
+    "Fin Nifty": "NIFTY FINANCIAL SERVICES", "Midcap Select": "NIFTY MIDCAP SELECT",
+    "Nifty Next 50": "NIFTY NEXT 50", "Nifty Midcap 100": "NIFTY MIDCAP 100", "Nifty Smallcap 100": "NIFTY SMALLCAP 100",
     "IT": "NIFTY IT", "Banking": "NIFTY BANK", "Auto": "NIFTY AUTO", "Pharma": "NIFTY PHARMA",
     "FMCG": "NIFTY FMCG", "Metal": "NIFTY METAL", "Realty": "NIFTY REALTY", "Energy": "NIFTY ENERGY",
     "PSU Bank": "NIFTY PSU BANK", "Media": "NIFTY MEDIA", "Financial Services": "NIFTY FINANCIAL SERVICES",
@@ -322,7 +324,7 @@ CNBC = {  # yahoo symbol -> CNBC quote symbol
     "^GSPC": ".SPX", "^IXIC": ".IXIC", "^DJI": ".DJI", "ES=F": "@SP.1", "NQ=F": "@ND.1", "YM=F": "@DJ.1",
     "^N225": ".N225", "^HSI": ".HSI", "^FTSE": ".FTSE", "^GDAXI": ".GDAXI", "BZ=F": "@LCO.1",
     "GC=F": "@GC.1", "INR=X": "INR=", "DX-Y.NYB": ".DXY", "^TNX": "US10Y", "^VIX": ".VIX",
-    "^BSESN": ".BSESN",
+    "^BSESN": [".BSESN", ".SENSEX", "SENSEX"], "BANKEX": [".BSEBANK", ".BANKEX", "BANKEX"],
 }
 
 
@@ -334,7 +336,11 @@ def _num(v):
 
 
 def cnbc_batch(yahoo_syms):
-    want = {CNBC[s]: s for s in yahoo_syms if s in CNBC}
+    want = {}
+    for ys in yahoo_syms:
+        cands = CNBC.get(ys)
+        for c in ([cands] if isinstance(cands, str) else (cands or [])):
+            want[c] = ys
     if not want:
         return {}
     r = HTTP.get("https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol",
@@ -347,7 +353,9 @@ def cnbc_batch(yahoo_syms):
         rows = [rows]
     out = {}
     for row in rows:
-        ysym = want.get(row.get("symbol"))
+        ysym = want.get(row.get("symbol")) or want.get(row.get("altSymbol"))
+        if ysym in out:
+            continue
         last, prev = _num(row.get("last")), _num(row.get("previous_day_closing"))
         pct = _num(row.get("change_pct"))
         if ysym is None or last is None:
@@ -436,43 +444,69 @@ def _pick(d, keys):
     return None
 
 
-def sensex_quote():
-    """BSE's own API first, then Google Finance page."""
-    errs = []
+BSE_INDEX = {  # our symbol -> sources to try
+    "^BSESN": {"bse": "SENSEX", "mc": ["in%3BSEN"], "google": "SENSEX:INDEXBOM"},
+    "BANKEX": {"bse": "BANKEX", "mc": ["in%3BBKX", "in%3Bbkx"], "google": "BANKEX:INDEXBOM"},
+}
+
+
+def bse_quote(sym):
+    """BSE indices: BSE API -> Moneycontrol price feed -> Google Finance page."""
+    cfg, errs = BSE_INDEX[sym], []
     try:
         s = requests.Session()
         s.headers.update({"User-Agent": UA, "Referer": "https://www.bseindia.com/",
-                          "Origin": "https://www.bseindia.com", "Accept": "application/json"})
+                          "Origin": "https://www.bseindia.com", "Accept": "application/json, text/plain, */*"})
+        try:
+            s.get("https://www.bseindia.com/", timeout=10)
+        except Exception:
+            pass
         r = s.get("https://api.bseindia.com/BseIndiaAPI/api/GetSensexData/w", timeout=15)
         r.raise_for_status()
         js = r.json()
         rows = js if isinstance(js, list) else (js.get("Table") or js.get("data") or [js])
-        row = next((x for x in rows if isinstance(x, dict) and "SENSEX" in json.dumps(x).upper()), rows[0])
-        price = _pick(row, ["ltp", "CurrValue", "Curvalue", "currentvalue", "last", "I_close", "Close"])
-        prev = _pick(row, ["Prev_Close", "PrevClose", "prevclose", "previousclose", "Prev"])
-        pct = _pick(row, ["perchg", "PerChange", "pchange", "chgper", "percentchange", "pChg"])
-        if price and not prev and pct is not None:
-            prev = price / (1 + pct / 100)
-        q = _q(price, prev)
-        if q:
-            return q
-        errs.append("bse: fields " + ",".join(list(row.keys())[:12]))
+        row = next((x for x in rows if isinstance(x, dict) and cfg["bse"] in json.dumps(x).upper()), None)
+        if row:
+            price = _pick(row, ["ltp", "CurrValue", "Curvalue", "currentvalue", "last", "I_close", "Close"])
+            prev = _pick(row, ["Prev_Close", "PrevClose", "prevclose", "previousclose", "Prev"])
+            pct = _pick(row, ["perchg", "PerChange", "pchange", "chgper", "percentchange", "pChg"])
+            if price and not prev and pct is not None:
+                prev = price / (1 + pct / 100)
+            q = _q(price, prev)
+            if q:
+                return q, "BSE"
+        errs.append("bse: no row")
     except Exception as e:
-        errs.append(f"bse: {str(e)[:60]}")
+        errs.append(f"bse: {str(e)[:40]}")
+    for code in cfg["mc"]:
+        try:
+            r = HTTP.get(f"https://priceapi.moneycontrol.com/pricefeed/notapplicable/inidicesindia/{code}", timeout=15)
+            r.raise_for_status()
+            dd = (r.json() or {}).get("data") or {}
+            price, prev = _num(dd.get("pricecurrent")), _num(dd.get("priceprevclose"))
+            pct = _num(dd.get("pricepercentchange"))
+            if price and not prev and pct is not None:
+                prev = price / (1 + pct / 100)
+            q = _q(price, prev)
+            if q:
+                return q, "Moneycontrol"
+            errs.append("mc: empty")
+        except Exception as e:
+            errs.append(f"mc: {str(e)[:40]}")
     try:
-        r = HTTP.get("https://www.google.com/finance/quote/SENSEX:INDEXBOM", timeout=15,
+        r = HTTP.get(f"https://www.google.com/finance/quote/{cfg['google']}?hl=en", timeout=15,
                      headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9", "Cookie": "CONSENT=YES+"})
         r.raise_for_status()
         html = r.text
         m = re.search(r'data-last-price="([\d.,]+)"', html)
-        mp = re.search(r"Previous close.{0,400}?>([\d,]+\.\d+)<", html, re.S)
+        mp = re.search(r"Previous close.{0,800}?>\s*([\d,]{4,}\.\d+)\s*<", html, re.S)
         if m and mp:
             q = _q(_num(m.group(1)), _num(mp.group(1)))
             if q:
-                return q
-        errs.append("google: not found")
+                return q, "Google"
+        errs.append(f"google: price={'y' if m else 'n'} prev={'y' if mp else 'n'} len={len(html)}")
     except Exception as e:
-        errs.append(f"google: {str(e)[:60]}")
+        errs.append(f"google: {str(e)[:40]}")
     raise RuntimeError("; ".join(errs))
 
 
@@ -523,13 +557,14 @@ def collect_markets(sources, prev_markets=None):
         except Exception as e:
             status.append({"name": "Yahoo Finance", "ok": False, "error": str(e)[:100]})
             log("yahoo failed", e)
-    # 3b) Sensex from BSE / Google Finance
-    if any(m["sym"] == "^BSESN" for _, m in all_items) and "^BSESN" not in got:
-        try:
-            got["^BSESN"] = sensex_quote()
-            status.append({"name": "Sensex (BSE/Google)", "ok": True, "count": 1})
-        except Exception as e:
-            status.append({"name": "Sensex (BSE/Google)", "ok": False, "error": str(e)[:150]})
+    # 3b) BSE indices (Sensex, BANKEX) when CNBC/Yahoo did not give them
+    for bsym in BSE_INDEX:
+        if any(m["sym"] == bsym for _, m in all_items) and bsym not in got:
+            try:
+                got[bsym], src = bse_quote(bsym)
+                status.append({"name": f"{bsym.strip('^')} ({src})", "ok": True, "count": 1})
+            except Exception as e:
+                status.append({"name": f"{bsym.strip('^')} (BSE/MC/Google)", "ok": False, "error": str(e)[:180]})
     # 4) Stooq for whatever is still missing
     need = [s for s in need if s not in got and s in STOOQ]
     if need:
@@ -826,6 +861,9 @@ def call_gemini(prompt, key, models):
                 "generationConfig": {"temperature": 0.3, "responseMimeType": "application/json"}}
         try:
             r = requests.post(url, json=body, headers={"x-goog-api-key": key}, timeout=150)
+            if r.status_code in (429, 500, 503):  # busy: wait once and retry the same model
+                time.sleep(8)
+                r = requests.post(url, json=body, headers={"x-goog-api-key": key}, timeout=150)
             if r.status_code != 200:
                 last_err = f"{model}: HTTP {r.status_code} {r.text[:200]}"
                 log("gemini", last_err)
@@ -1082,7 +1120,8 @@ def fo_idea(o, outlook_label, ai_bias=None):
 
 def collect_options():
     out, status = {}, []
-    for key, sym, name, step in (("nifty", "NIFTY", "Nifty", 50), ("banknifty", "BANKNIFTY", "Bank Nifty", 100)):
+    for key, sym, name, step in (("nifty", "NIFTY", "Nifty", 50), ("banknifty", "BANKNIFTY", "Bank Nifty", 100),
+                                 ("finnifty", "FINNIFTY", "Fin Nifty", 50), ("midcpnifty", "MIDCPNIFTY", "Midcap Select", 25)):
         try:
             out[key] = option_metrics(sym, name, step)
             time.sleep(1)
