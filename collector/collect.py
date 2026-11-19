@@ -220,6 +220,12 @@ def build_matchers(stocks_cfg):
     return stocks, sectors
 
 
+EXPLAIN_RX = re.compile(
+    r"(explainer|explained|what is|what are|how to|how does|why is|why are|guide to|faq|quiz|"
+    r"live updates|live blog|stocks to watch|stocks to buy|क्या है|क्या होता|जानें|समझें|कैसे|एक्सप्लेनर|"
+    r"लाइव अपडेट|देखें लिस्ट)", re.I)
+
+
 def tag_item(item, stocks, sector_kw):
     text = (item["title"] + " " + item.get("desc", "")).lower()
     title = item["title"].lower()
@@ -235,7 +241,10 @@ def tag_item(item, stocks, sector_kw):
             secs.add(sec)
     item["symbols"] = syms[:5]
     item["sectors"] = sorted(secs)
-    # title counts double
+    if EXPLAIN_RX.search(item["title"]):
+        item["sent"] = 0.0  # explainers / how-to / live blogs carry no direction
+        item["explainer"] = True
+        return
     item["sent"] = round(max(-1, min(1, sentiment(item["title"]) * 0.75 + sentiment(text) * 0.25)), 3)
 
 
@@ -268,7 +277,7 @@ def collect_news(sources, prev, stocks, sector_kw):
         old = by_id.get(iid)
         it["id"] = iid
         if old:
-            for k in ("ai_impact", "ai_gu", "ai_symbols", "published"):
+            for k in ("ai_impact", "ai_gu", "ai_en", "ai_symbols", "published", "tr_gu", "tr_en"):
                 if k in old:
                     it[k] = old[k]
         by_id[iid] = it
@@ -362,10 +371,7 @@ def _q(price, prev, ts=None, closes=None):
 
 
 def nse_indices():
-    s = requests.Session()
-    s.headers.update({"User-Agent": UA, "Accept": "application/json",
-                      "Referer": "https://www.nseindia.com/market-data/live-market-indices"})
-    s.get("https://www.nseindia.com/", timeout=15)
+    s = nse_session()
     r = s.get("https://www.nseindia.com/api/allIndices", timeout=15)
     r.raise_for_status()
     out = {}
@@ -422,6 +428,54 @@ def yahoo_batch(symbols):
     return out
 
 
+def _pick(d, keys):
+    for k in keys:
+        for kk, v in d.items():
+            if kk.lower() == k.lower() and _num(v) is not None:
+                return _num(v)
+    return None
+
+
+def sensex_quote():
+    """BSE's own API first, then Google Finance page."""
+    errs = []
+    try:
+        s = requests.Session()
+        s.headers.update({"User-Agent": UA, "Referer": "https://www.bseindia.com/",
+                          "Origin": "https://www.bseindia.com", "Accept": "application/json"})
+        r = s.get("https://api.bseindia.com/BseIndiaAPI/api/GetSensexData/w", timeout=15)
+        r.raise_for_status()
+        js = r.json()
+        rows = js if isinstance(js, list) else (js.get("Table") or js.get("data") or [js])
+        row = next((x for x in rows if isinstance(x, dict) and "SENSEX" in json.dumps(x).upper()), rows[0])
+        price = _pick(row, ["ltp", "CurrValue", "Curvalue", "currentvalue", "last", "I_close", "Close"])
+        prev = _pick(row, ["Prev_Close", "PrevClose", "prevclose", "previousclose", "Prev"])
+        pct = _pick(row, ["perchg", "PerChange", "pchange", "chgper", "percentchange", "pChg"])
+        if price and not prev and pct is not None:
+            prev = price / (1 + pct / 100)
+        q = _q(price, prev)
+        if q:
+            return q
+        errs.append("bse: fields " + ",".join(list(row.keys())[:12]))
+    except Exception as e:
+        errs.append(f"bse: {str(e)[:60]}")
+    try:
+        r = HTTP.get("https://www.google.com/finance/quote/SENSEX:INDEXBOM", timeout=15,
+                     headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9", "Cookie": "CONSENT=YES+"})
+        r.raise_for_status()
+        html = r.text
+        m = re.search(r'data-last-price="([\d.,]+)"', html)
+        mp = re.search(r"Previous close.{0,400}?>([\d,]+\.\d+)<", html, re.S)
+        if m and mp:
+            q = _q(_num(m.group(1)), _num(mp.group(1)))
+            if q:
+                return q
+        errs.append("google: not found")
+    except Exception as e:
+        errs.append(f"google: {str(e)[:60]}")
+    raise RuntimeError("; ".join(errs))
+
+
 def stooq_quote(sym):
     r = HTTP.get("https://stooq.com/q/d/l/", params={"s": sym, "i": "d"}, timeout=15)
     r.raise_for_status()
@@ -469,6 +523,13 @@ def collect_markets(sources, prev_markets=None):
         except Exception as e:
             status.append({"name": "Yahoo Finance", "ok": False, "error": str(e)[:100]})
             log("yahoo failed", e)
+    # 3b) Sensex from BSE / Google Finance
+    if any(m["sym"] == "^BSESN" for _, m in all_items) and "^BSESN" not in got:
+        try:
+            got["^BSESN"] = sensex_quote()
+            status.append({"name": "Sensex (BSE/Google)", "ok": True, "count": 1})
+        except Exception as e:
+            status.append({"name": "Sensex (BSE/Google)", "ok": False, "error": str(e)[:150]})
     # 4) Stooq for whatever is still missing
     need = [s for s in need if s not in got and s in STOOQ]
     if need:
@@ -567,32 +628,38 @@ def global_score(markets):
                     return q["pct"]
         return None
 
+    def add(t, gu, en):
+        reasons.append((t, gu, en))
+
     fut = get("S&P 500 Futures")
     if fut is not None and abs(fut) >= 0.15:
-        reasons.append(("pos" if fut > 0 else "neg",
-                        f"અમેરિકન ફ્યુચર્સ (S&P) {fmt_pct(fut)} — {'પોઝિટિવ' if fut > 0 else 'નેગેટિવ'} સંકેત"))
+        add("pos" if fut > 0 else "neg",
+            f"અમેરિકન ફ્યુચર્સ (S&P) {fmt_pct(fut)} — {'પોઝિટિવ' if fut > 0 else 'નેગેટિવ'} સંકેત",
+            f"US futures (S&P) {fmt_pct(fut)} — {'positive' if fut > 0 else 'negative'} cue")
     asia = [p for p in (get("Nikkei 225"), get("Hang Seng")) if p is not None]
     if asia:
         a = sum(asia) / len(asia)
         if abs(a) >= 0.3:
-            reasons.append(("pos" if a > 0 else "neg",
-                            f"એશિયન બજારો સરેરાશ {fmt_pct(a)} — {'સપોર્ટ' if a > 0 else 'દબાણ'}"))
+            add("pos" if a > 0 else "neg", f"એશિયન બજારો સરેરાશ {fmt_pct(a)} — {'સપોર્ટ' if a > 0 else 'દબાણ'}",
+                f"Asian markets avg {fmt_pct(a)} — {'support' if a > 0 else 'pressure'}")
     crude = get("Brent Crude")
     if crude is not None and abs(crude) >= 1:
-        reasons.append(("neg" if crude > 0 else "pos",
-                        f"ક્રૂડ ઓઇલ {fmt_pct(crude)} — ભારત માટે {'નેગેટિવ (આયાત ખર્ચ વધે)' if crude > 0 else 'પોઝિટિવ'}"))
+        add("neg" if crude > 0 else "pos",
+            f"ક્રૂડ ઓઇલ {fmt_pct(crude)} — ભારત માટે {'નેગેટિવ (આયાત ખર્ચ વધે)' if crude > 0 else 'પોઝિટિવ'}",
+            f"Brent crude {fmt_pct(crude)} — {'negative for India (higher import bill)' if crude > 0 else 'positive for India'}")
     inr = get("USD/INR")
     if inr is not None and abs(inr) >= 0.15:
-        reasons.append(("neg" if inr > 0 else "pos",
-                        f"રૂપિયો {'નબળો' if inr > 0 else 'મજબૂત'} (USD/INR {fmt_pct(inr)})"))
+        add("neg" if inr > 0 else "pos", f"રૂપિયો {'નબળો' if inr > 0 else 'મજબૂત'} (USD/INR {fmt_pct(inr)})",
+            f"Rupee {'weaker' if inr > 0 else 'stronger'} (USD/INR {fmt_pct(inr)})")
     tnx = get("US 10Y Yield")
     if tnx is not None and abs(tnx) >= 1.5:
-        reasons.append(("neg" if tnx > 0 else "pos",
-                        f"US બોન્ડ યીલ્ડ {fmt_pct(tnx)} — {'FII વેચવાલીનો ડર' if tnx > 0 else 'FII માટે સારું'}"))
+        add("neg" if tnx > 0 else "pos",
+            f"US બોન્ડ યીલ્ડ {fmt_pct(tnx)} — {'FII વેચવાલીનો ડર' if tnx > 0 else 'FII માટે સારું'}",
+            f"US 10Y yield {fmt_pct(tnx)} — {'risk of FII selling' if tnx > 0 else 'good for FII flows'}")
     vix = get("India VIX")
     if vix is not None and abs(vix) >= 5:
-        reasons.append(("neg" if vix > 0 else "pos",
-                        f"India VIX {fmt_pct(vix)} — {'અસ્થિરતા વધી' if vix > 0 else 'ડર ઘટ્યો'}"))
+        add("neg" if vix > 0 else "pos", f"India VIX {fmt_pct(vix)} — {'અસ્થિરતા વધી' if vix > 0 else 'ડર ઘટ્યો'}",
+            f"India VIX {fmt_pct(vix)} — {'volatility rising' if vix > 0 else 'fear easing'}")
     return score, reasons
 
 
@@ -641,7 +708,8 @@ def rule_outlook(news, markets):
     if n:
         pct_pos = round(pos / n * 100)
         reasons.append(("pos" if ns > 0.05 else "neg" if ns < -0.05 else "neu",
-                        f"છેલ્લા 18 કલાકના {n} સમાચારમાંથી {pct_pos}% પોઝિટિવ, {round(neg / n * 100)}% નેગેટિવ"))
+                        f"છેલ્લા 18 કલાકના {n} સમાચારમાંથી {pct_pos}% પોઝિટિવ, {round(neg / n * 100)}% નેગેટિવ",
+                        f"Of {n} news items in the last 18 h, {pct_pos}% positive, {round(neg / n * 100)}% negative"))
     agree = (g_norm > 0) == (ns > 0)
     data_ok = sum(1 for g in ("global", "macro") for q in markets.get(g, []) if q.get("pct") is not None)
     conf = "medium" if (agree and abs(combined) > 0.25 and data_ok >= 8 and n >= 20) else "low"
@@ -651,7 +719,7 @@ def rule_outlook(news, markets):
         "confidence": conf,
         "global_score": round(g_norm, 3),
         "news_score": round(ns, 3),
-        "reasons": [{"type": t, "text": x} for t, x in reasons],
+        "reasons": [{"type": t, "text": gu, "gu": gu, "en": en} for t, gu, en in reasons],
     }
 
 
@@ -702,38 +770,50 @@ def stock_summary(news, stocks_cfg):
 # --------------------------------------------------------------------------
 # Gemini AI (optional)
 # --------------------------------------------------------------------------
-AI_PROMPT = """You are an experienced Indian stock-market analyst. Below are the latest
-financial headlines (Indian English, Hindi and global) and a market data snapshot.
-Current time (IST): {now}. The session being forecast: {session} ({phase}).
+AI_PROMPT = """You are an experienced Indian stock-market and F&O analyst.
+DATE CONTEXT (very important):
+- Now (IST): {now_long}.
+- Indian market status right now: {status_text}
+- The forecast is for the trading session of {session_long}.
+- Headlines below carry their IST publish time. Anything published today describes TODAY ({today_long});
+  call it "today/આજે", not "yesterday/ગઈકાલે". Only use "yesterday" for events of {yday_long}.
 
 Market snapshot (daily % change):
 {snapshot}
 
-Headlines (index | region | source | title):
+Index options data (NSE, nearest expiry):
+{options}
+
+Headlines (index | IST time | region | source | title):
 {headlines}
 
-Return ONLY JSON with this exact shape. All *_gu fields must be in simple Gujarati.
+Return ONLY JSON with exactly this shape. Every *_gu field in simple Gujarati, every *_en field in simple English.
 {{
-  "summary_gu": "4-6 short sentences: what happened, what global cues say, what to expect",
+  "summary_gu": "4-6 short sentences", "summary_en": "same in English",
   "outlook": {{"label": "strong_positive|positive|neutral|negative|strong_negative",
                "confidence": "low|medium|high",
-               "reasons_gu": ["3-6 short reasons"]}},
-  "global_gu": "2-3 sentences on global markets and their likely effect on India",
+               "reasons_gu": ["3-6 short reasons"], "reasons_en": ["same in English"]}},
+  "global_gu": "2-3 sentences on global cues and likely effect on India", "global_en": "same in English",
   "sectors": [{{"sector": "IT|Banking|PSU Bank|Auto|Pharma|FMCG|Metal|Energy|Realty|Power|Defence|Railway|Telecom|Cement|Aviation|Financial Services|Infra|Consumer|Media",
-                "view": "positive|neutral|negative", "reason_gu": "one line"}}],
-  "items": [{{"i": 0, "impact": -2, "symbols": ["NSE symbols"], "gu": "one-line Gujarati meaning & impact"}}],
-  "watch": [{{"symbol": "NSE symbol", "view": "positive|negative", "reason_gu": "why it is in focus"}}]
+                "view": "positive|neutral|negative", "reason_gu": "one line", "reason_en": "one line"}}],
+  "items": [{{"i": 0, "impact": 0, "symbols": ["NSE symbols"], "gu": "one-line Gujarati meaning & impact", "en": "one-line English impact"}}],
+  "watch": [{{"symbol": "NSE symbol", "view": "positive|negative", "reason_gu": "why in focus", "reason_en": "why in focus"}}],
+  "fo": {{
+    "nifty": {{"bias": "bullish|bearish|neutral", "note_gu": "2 lines: view for the session with key levels", "note_en": "same"}},
+    "banknifty": {{"bias": "bullish|bearish|neutral", "note_gu": "2 lines", "note_en": "same"}},
+    "stocks": [{{"symbol": "F&O stock NSE symbol", "bias": "bullish|bearish", "reason_gu": "news-based reason", "reason_en": "same"}}]
+  }}
 }}
-Rules: impact is -2..+2 for Indian stock market / the named company (0 = no market impact).
-Include "items" for every headline that matters (skip pure noise). Be balanced and factual;
-never give buy/sell advice; this is an informational outlook only."""
+Rules: impact is -2..+2 for the Indian market / the named company; 0 for explainers, how-to, opinion,
+live blogs or unrelated news. "fo.stocks": at most 4 liquid NSE F&O stocks with a clear fresh news trigger.
+Be balanced and factual. This is an educational outlook, not investment advice."""
 
 
 def ai_snapshot(markets):
     lines = []
     for grp in ("india", "global", "macro", "sectors"):
         for q in markets.get(grp, []):
-            if q.get("pct") is not None:
+            if q.get("pct") is not None and not q.get("stale"):
                 lines.append(f"{grp}: {q['name']} {q['pct']:+.2f}% (last {q['price']})")
     return "\n".join(lines) or "(no market data)"
 
@@ -745,7 +825,7 @@ def call_gemini(prompt, key, models):
         body = {"contents": [{"role": "user", "parts": [{"text": prompt}]}],
                 "generationConfig": {"temperature": 0.3, "responseMimeType": "application/json"}}
         try:
-            r = requests.post(url, json=body, headers={"x-goog-api-key": key}, timeout=120)
+            r = requests.post(url, json=body, headers={"x-goog-api-key": key}, timeout=150)
             if r.status_code != 200:
                 last_err = f"{model}: HTTP {r.status_code} {r.text[:200]}"
                 log("gemini", last_err)
@@ -760,14 +840,29 @@ def call_gemini(prompt, key, models):
     raise RuntimeError(last_err or "gemini failed")
 
 
-def run_ai(news, markets, prev, session, phase, now_ist):
+def _long_date(d):
+    return d.strftime("%A %d %B %Y")
+
+
+def options_text(options):
+    out = []
+    for key, o in (options or {}).items():
+        if not o:
+            continue
+        out.append(f"{o['name']}: spot {o['spot']}, expiry {o['expiry']}, PCR {o['pcr']}, max pain {o['max_pain']}, "
+                   f"support (max PE OI) {o['support']}, resistance (max CE OI) {o['resistance']}, "
+                   f"ATM {o['atm']} CE {o.get('atm_ce')} / PE {o.get('atm_pe')}, ATM IV {o.get('iv')}")
+    return "\n".join(out) or "(not available)"
+
+
+def run_ai(news, markets, prev, session, phase, now_ist, options=None):
     key = os.environ.get("GEMINI_API_KEY", "").strip()
     prev_ai = prev.get("ai")
     if not key:
         return None, "no_key"
     interval = int(os.environ.get("AI_MIN_INTERVAL_MIN", "120") or 120)
     force = os.environ.get("AI_FORCE", "") == "1"
-    if prev_ai and prev_ai.get("generated_at") and not force:
+    if prev_ai and prev_ai.get("generated_at") and not force and prev_ai.get("schema") == 2:
         try:
             age = (now_utc() - datetime.fromisoformat(prev_ai["generated_at"])).total_seconds() / 60
             same_session = prev_ai.get("session") == str(session)
@@ -776,11 +871,25 @@ def run_ai(news, markets, prev, session, phase, now_ist):
         except Exception:
             pass
     models = [m.strip() for m in (os.environ.get("GEMINI_MODELS") or
-                                       "gemini-flash-latest,gemini-2.5-flash,gemini-flash-lite-latest").split(",") if m.strip()]
-    pick = news[:90]
-    heads = "\n".join(f"{i} | {it['region']} | {it['source']} | {it['title']}" for i, it in enumerate(pick))
-    prompt = AI_PROMPT.format(now=now_ist.strftime("%d %b %Y %H:%M"), session=session,
-                              phase=phase, snapshot=ai_snapshot(markets), headlines=heads)
+                                  "gemini-flash-latest,gemini-2.5-flash,gemini-flash-lite-latest").split(",") if m.strip()]
+    pick = news[:70]
+    heads = []
+    for i, it in enumerate(pick):
+        try:
+            t = datetime.fromisoformat(it["published"]).astimezone(IST).strftime("%d %b %H:%M")
+        except Exception:
+            t = "?"
+        heads.append(f"{i} | {t} | {it['region']} | {it['source']} | {it['title']}")
+    status_text = {
+        "live": "OPEN (live session in progress today).",
+        "pre": "NOT YET OPEN today (opens 09:15 IST).",
+        "closed": "CLOSED (today's session ended at 15:30 IST or it is a weekend).",
+    }[phase]
+    yday = (now_ist - timedelta(days=1)).date()
+    prompt = AI_PROMPT.format(
+        now_long=now_ist.strftime("%A %d %B %Y, %H:%M"), status_text=status_text,
+        session_long=_long_date(session), today_long=_long_date(now_ist.date()), yday_long=_long_date(yday),
+        snapshot=ai_snapshot(markets), options=options_text(options), headlines="\n".join(heads))
     try:
         res, model = call_gemini(prompt, key, models)
     except Exception as e:
@@ -793,6 +902,8 @@ def run_ai(news, markets, prev, session, phase, now_ist):
                 it["ai_impact"] = max(-2, min(2, int(row.get("impact", 0))))
                 if row.get("gu"):
                     it["ai_gu"] = str(row["gu"])[:300]
+                if row.get("en"):
+                    it["ai_en"] = str(row["en"])[:300]
                 if row.get("symbols"):
                     it["ai_symbols"] = [str(s).upper() for s in row["symbols"]][:5]
         except Exception:
@@ -801,13 +912,192 @@ def run_ai(news, markets, prev, session, phase, now_ist):
     res["generated_at"] = now_utc().isoformat()
     res["session"] = str(session)
     res["model"] = model
+    res["schema"] = 2
     return res, "ok"
+
+
+# --------------------------------------------------------------------------
+# Free translation (Google Translate web endpoint) — cached per news item
+# --------------------------------------------------------------------------
+def _gtx(text, tl):
+    url = "https://translate.googleapis.com/translate_a/single"
+    params = {"client": "gtx", "sl": "auto", "tl": tl, "dt": "t"}
+    try:
+        r = HTTP.post(url, params=params, data={"q": text}, timeout=25)
+        r.raise_for_status()
+    except Exception:
+        r = HTTP.get(url, params=dict(params, q=text), timeout=25)
+        r.raise_for_status()
+    js = r.json()
+    return "".join(seg[0] for seg in js[0] if seg and seg[0])
+
+
+def translate_titles(news, max_new=160):
+    """adds tr_gu to every non-Gujarati title and tr_en to Hindi titles"""
+    stats = {"ok": 0, "fail": 0}
+    for tl, field, cond in (("gu", "tr_gu", lambda it: True),
+                            ("en", "tr_en", lambda it: it.get("lang") == "hi")):
+        todo = [it for it in news if cond(it) and not it.get(field)][:max_new]
+        i = 0
+        while i < len(todo):
+            chunk = todo[i:i + 12]
+            i += 12
+            text = "\n".join(it["title"].replace("\n", " ") for it in chunk)
+            try:
+                out = _gtx(text, tl).split("\n")
+                if len(out) == len(chunk):
+                    for it, t in zip(chunk, out):
+                        it[field] = t.strip()
+                    stats["ok"] += len(chunk)
+                else:  # fallback one by one
+                    for it in chunk:
+                        it[field] = _gtx(it["title"], tl).strip()
+                        stats["ok"] += 1
+                        time.sleep(0.2)
+            except Exception as e:
+                stats["fail"] += len(chunk)
+                stats["error"] = str(e)[:100]
+                log("translate failed", e)
+                break
+            time.sleep(0.4)
+    return stats
+
+
+# --------------------------------------------------------------------------
+# NSE option chain -> F&O levels and an educational trade idea
+# --------------------------------------------------------------------------
+_NSE = None
+
+
+def nse_session():
+    global _NSE
+    if _NSE is None:
+        s = requests.Session()
+        s.headers.update({"User-Agent": UA, "Accept": "application/json, text/plain, */*",
+                          "Accept-Language": "en-US,en;q=0.9",
+                          "Referer": "https://www.nseindia.com/option-chain"})
+        try:
+            s.get("https://www.nseindia.com/", timeout=15)
+            s.get("https://www.nseindia.com/option-chain", timeout=15)
+        except Exception:
+            pass
+        _NSE = s
+    return _NSE
+
+
+def _chain_rows(symbol):
+    s = nse_session()
+    # newer API needs an expiry; older one returns everything
+    try:
+        info = s.get("https://www.nseindia.com/api/option-chain-contract-info", params={"symbol": symbol}, timeout=15)
+        info.raise_for_status()
+        exps = info.json().get("expiryDates") or []
+        if exps:
+            r = s.get("https://www.nseindia.com/api/option-chain-v3",
+                      params={"type": "Indices", "symbol": symbol, "expiry": exps[0]}, timeout=20)
+            r.raise_for_status()
+            js = r.json()
+            rec = js.get("records", {})
+            rows = rec.get("data") or js.get("filtered", {}).get("data") or []
+            if rows:
+                return rows, rec.get("underlyingValue"), exps[0]
+    except Exception as e:
+        log("option-chain v3 failed", symbol, e)
+    r = s.get("https://www.nseindia.com/api/option-chain-indices", params={"symbol": symbol}, timeout=20)
+    r.raise_for_status()
+    rec = r.json().get("records", {})
+    exp = (rec.get("expiryDates") or [None])[0]
+    rows = [x for x in rec.get("data", []) if not exp or x.get("expiryDate", x.get("expiryDates")) == exp]
+    return rows, rec.get("underlyingValue"), exp
+
+
+def option_metrics(symbol, name, step):
+    rows, spot, exp = _chain_rows(symbol)
+    if not rows or not spot:
+        raise ValueError("empty chain")
+    strikes = {}
+    for x in rows:
+        k = x.get("strikePrice")
+        if k is None:
+            continue
+        ce, pe = x.get("CE") or {}, x.get("PE") or {}
+        strikes[k] = {"ce_oi": ce.get("openInterest") or 0, "pe_oi": pe.get("openInterest") or 0,
+                      "ce_chg": ce.get("changeinOpenInterest") or 0, "pe_chg": pe.get("changeinOpenInterest") or 0,
+                      "ce_ltp": ce.get("lastPrice"), "pe_ltp": pe.get("lastPrice"),
+                      "ce_iv": ce.get("impliedVolatility"), "pe_iv": pe.get("impliedVolatility")}
+    ks = sorted(strikes)
+    tot_ce = sum(v["ce_oi"] for v in strikes.values()) or 1
+    tot_pe = sum(v["pe_oi"] for v in strikes.values())
+    near = [k for k in ks if abs(k - spot) <= spot * 0.06] or ks
+    resistance = max((k for k in near if k >= spot), key=lambda k: strikes[k]["ce_oi"], default=None)
+    support = max((k for k in near if k <= spot), key=lambda k: strikes[k]["pe_oi"], default=None)
+
+    def pain(p):
+        return sum(v["ce_oi"] * max(0, p - k) + v["pe_oi"] * max(0, k - p) for k, v in strikes.items())
+    max_pain = min(near, key=pain)
+    atm = min(ks, key=lambda k: abs(k - spot))
+    a = strikes[atm]
+    ivs = [v for v in (a["ce_iv"], a["pe_iv"]) if v]
+    return {"symbol": symbol, "name": name, "spot": round(spot, 2), "expiry": exp, "step": step,
+            "pcr": round(tot_pe / tot_ce, 2), "max_pain": max_pain, "support": support, "resistance": resistance,
+            "atm": atm, "atm_ce": a["ce_ltp"], "atm_pe": a["pe_ltp"],
+            "iv": round(sum(ivs) / len(ivs), 1) if ivs else None,
+            "otm_ce": strikes.get(atm + step, {}).get("ce_ltp"), "otm_pe": strikes.get(atm - step, {}).get("pe_ltp")}
+
+
+LABEL_SCORE = {"strong_positive": 0.7, "positive": 0.4, "neutral": 0.0, "negative": -0.4, "strong_negative": -0.7}
+
+
+def fo_idea(o, outlook_label, ai_bias=None):
+    """Educational option idea from outlook + option-chain positioning (no guarantees)."""
+    s = o["spot"]
+    pcr_sig = max(-1, min(1, (o["pcr"] - 1.0) / 0.4))
+    mp_sig = max(-1, min(1, (o["max_pain"] - s) / (s * 0.01))) if o.get("max_pain") else 0
+    b = LABEL_SCORE.get(outlook_label, 0) * 0.6 + pcr_sig * 0.25 + mp_sig * 0.15
+    if ai_bias == "bullish":
+        b += 0.1
+    elif ai_bias == "bearish":
+        b -= 0.1
+    idea = {"score": round(b, 2), "pcr_sig": round(pcr_sig, 2)}
+    sup, res = o.get("support"), o.get("resistance")
+    if b >= 0.2:
+        prem = o.get("atm_ce")
+        idea.update(bias="bullish", action="BUY_CE", strike=o["atm"], opt="CE", premium=prem,
+                    spread={"buy": o["atm"], "sell": res if res and res > o["atm"] else o["atm"] + 2 * o["step"], "type": "CE"},
+                    trigger=round(s), target_level=res, stop_level=sup)
+    elif b <= -0.2:
+        prem = o.get("atm_pe")
+        idea.update(bias="bearish", action="BUY_PE", strike=o["atm"], opt="PE", premium=prem,
+                    spread={"buy": o["atm"], "sell": sup if sup and sup < o["atm"] else o["atm"] - 2 * o["step"], "type": "PE"},
+                    trigger=round(s), target_level=sup, stop_level=res)
+    else:
+        idea.update(bias="neutral", action="WAIT", trigger_up=res, trigger_down=sup)
+        prem = None
+    if prem:
+        idea["sl_premium"] = round(prem * 0.7, 1)       # ~30% risk
+        idea["target_premium"] = round(prem * 1.5, 1)   # ~1:1.7 reward
+    idea["confidence"] = "medium" if abs(b) >= 0.45 else "low"
+    return idea
+
+
+def collect_options():
+    out, status = {}, []
+    for key, sym, name, step in (("nifty", "NIFTY", "Nifty", 50), ("banknifty", "BANKNIFTY", "Bank Nifty", 100)):
+        try:
+            out[key] = option_metrics(sym, name, step)
+            time.sleep(1)
+        except Exception as e:
+            status.append({"name": f"NSE option chain {sym}", "ok": False, "error": str(e)[:100]})
+            log("option chain failed", sym, e)
+    if out:
+        status.append({"name": "NSE option chain", "ok": True, "count": len(out)})
+    return out, status
 
 
 # --------------------------------------------------------------------------
 # Track record: what we said vs what Nifty did
 # --------------------------------------------------------------------------
-def update_history(prev, outlook, ai, markets, session, phase, now_ist):
+def update_history(prev, outlook, ai, markets, session, phase, now_ist, options=None):
     hist = prev.get("history", {})
     key = str(session)
     final_label = (ai or {}).get("outlook", {}).get("label") if ai else None
@@ -817,6 +1107,9 @@ def update_history(prev, outlook, ai, markets, session, phase, now_ist):
         entry["rule"] = outlook["label"]
         if final_label:
             entry["ai"] = final_label
+        nifty = (options or {}).get("nifty") or {}
+        if nifty.get("idea") and not nifty.get("stale"):
+            entry["fo"] = nifty["idea"]["bias"]
     # record actual Nifty move once the session is running/closed
     today = now_ist.date()
     for q in markets.get("india", []):
@@ -854,15 +1147,27 @@ def main():
     session, phase = target_session(now_ist)
 
     news, feed_status = collect_news(sources, prev, stocks, sector_kw)
+    tr = translate_titles(news)
+    feed_status.append({"name": "Translation (gu/en)", "ok": tr["fail"] == 0, "count": tr["ok"],
+                        **({"error": tr.get("error", "")} if tr["fail"] else {})})
     markets, mkt_status = collect_markets(sources, prev.get("markets"))
     fii = collect_fii_dii() or prev.get("fii_dii")
+    options, opt_status = collect_options()
+    if not options and prev.get("options"):
+        options = prev["options"]
+        for o in options.values():
+            o["stale"] = True
 
-    ai, ai_status = run_ai(news, markets, prev, session, phase, now_ist)
+    ai, ai_status = run_ai(news, markets, prev, session, phase, now_ist, options)
     outlook = rule_outlook(news, markets)  # after AI so it can use ai_impact
+    final_label = ((ai or {}).get("outlook") or {}).get("label") or outlook["label"]
+    ai_fo = (ai or {}).get("fo") or {}
+    for key, o in options.items():
+        o["idea"] = fo_idea(o, final_label, (ai_fo.get(key) or {}).get("bias"))
 
     data = {
         "app": "M-Market",
-        "schema": 1,
+        "schema": 2,
         "generated_at": now_utc().isoformat(),
         "session": {"date": str(session), "phase": phase},
         "outlook": outlook,
@@ -874,9 +1179,10 @@ def main():
         "stocks": stock_summary(news, stocks_cfg),
         "stock_list": [[s[0], s[1], s[2]] for s in stocks_cfg["stocks"]],
         "news": news,
-        "sources": feed_status + mkt_status,
+        "options": options,
+        "sources": feed_status + mkt_status + opt_status,
     }
-    data["history"] = update_history(prev, outlook, ai, markets, session, phase, now_ist)
+    data["history"] = update_history(prev, outlook, ai, markets, session, phase, now_ist, options)
 
     tmp = out_file + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
