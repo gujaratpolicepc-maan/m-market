@@ -3,7 +3,7 @@ name: Collect market data
 on:
   schedule:
     # Times are UTC. IST = UTC + 5:30
-    - cron: "*/20 2-10 * * 1-5"     # every 20 min, 07:30–16:30 IST, Mon–Fri (market hours)
+    - cron: "*/10 2-10 * * 1-5"     # every 20 min, 07:30–16:30 IST, Mon–Fri (market hours)
     - cron: "15 11-23/2 * * *"      # every 2 h in the evening / night (US market, global news)
     - cron: "15 0,1 * * *"          # early morning IST (US close, Asia open)
   workflow_dispatch:
