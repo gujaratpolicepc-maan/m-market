@@ -24,6 +24,25 @@
       NATIVE.http(id, url);
     });
   }
+  var BSE_PAGE = "https://www.bseindia.com/markets/Derivatives/DeriReports/DeriOptionchain.html";
+  function bget(url) { // BSE blocks plain HTTP clients -> fetch from inside an invisible browser on bseindia.com
+    if (!NATIVE || !NATIVE.httpBrowser) return nget(url);
+    return new Promise(function (resolve, reject) {
+      var id = "b" + (++seq);
+      var to = setTimeout(function () { delete cbs[id]; reject(new Error("timeout")); }, 60000);
+      cbs[id] = function (code, body) {
+        clearTimeout(to);
+        if (code >= 200 && code < 300) resolve(body);
+        else reject(new Error("BSE HTTP " + code + (code < 0 ? " " + String(body).slice(0, 80) : "")));
+      };
+      NATIVE.httpBrowser(id, BSE_PAGE, url);
+    });
+  }
+  function bjson(url) {
+    return bget(url).then(function (t) {
+      try { return JSON.parse(t); } catch (e) { throw new Error("BSE: bad JSON (" + String(t).slice(0, 40) + ")"); }
+    });
+  }
   function njson(url) {
     return nget(url).then(function (t) {
       try { return JSON.parse(t); } catch (e) { throw new Error("bad JSON (" + String(t).slice(0, 40) + ")"); }
@@ -72,7 +91,7 @@
     });
   }
   function bseIndices() {
-    return njson("https://api.bseindia.com/BseIndiaAPI/api/GetSensexData/w").then(function (js) {
+    return bjson("https://api.bseindia.com/BseIndiaAPI/api/GetSensexData/w").then(function (js) {
       var rows = Array.isArray(js) ? js : (js.Table || js.data || [js]);
       var out = {};
       rows.forEach(function (r) {
@@ -175,7 +194,7 @@
   }
   function bseExpiries(scrip) {
     var url = "https://api.bseindia.com/BseIndiaAPI/api/ddlExpiry_IV/w?ProductType=IO&scrip_cd=" + scrip;
-    return njson(url).then(function (js) {
+    return bjson(url).then(function (js) {
       var exps = [];
       arrays(js).forEach(function (arr) {
         arr.forEach(function (o) {
@@ -196,7 +215,7 @@
   }
   function bseChain(scrip, expiry) {
     var url = "https://api.bseindia.com/BseIndiaAPI/api/DerivOptionChain_IV/w?Expiry=" + encodeURIComponent(expiry) + "&scrip_cd=" + scrip + "&strprice=0";
-    return njson(url).then(function (js) {
+    return bjson(url).then(function (js) {
       var arr = arrays(js).sort(function (a, b) { return b.length - a.length; })[0] || [];
       if (!arr.length) throw new Error("BSE: empty chain");
       var r0 = arr[0];
@@ -263,29 +282,56 @@
   }
 
   var LABEL_SCORE = { strong_positive: 0.7, positive: 0.4, neutral: 0, negative: -0.4, strong_negative: -0.7 };
-  /** same logic as collector/collect.py fo_idea() */
-  function idea(o, label, aiBias) {
-    var s = o.spot;
-    var pcrSig = o.pcr == null ? 0 : Math.max(-1, Math.min(1, (o.pcr - 1.0) / 0.4));
-    var mpSig = o.max_pain ? Math.max(-1, Math.min(1, (o.max_pain - s) / (s * 0.01))) : 0;
-    var b = (LABEL_SCORE[label] || 0) * 0.6 + pcrSig * 0.25 + mpSig * 0.15;
+  var MON = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+  function expiryDate(e) { // "23-Nov-2026" or "20 Nov 2026" -> Date (UTC midnight)
+    var p = String(e || "").split(/[- ]/);
+    if (p.length < 3) return null;
+    var m = MON[String(p[1]).slice(0, 3).toLowerCase()];
+    return m == null ? null : new Date(Date.UTC(+p[2], m, +p[0]));
+  }
+  function clamp(x) { return Math.max(-1, Math.min(1, x)); }
+  function r1(x) { return Math.round(x * 10) / 10; }
+
+  /** Trade plan: CALL / PUT / NO TRADE with buy zone, stop-loss, targets. ctx = {pct: intraday index % change} */
+  function idea(o, label, aiBias, ctx) {
+    ctx = ctx || {};
+    var s = o.spot, sig = {};
+    sig.outlook = LABEL_SCORE[label] || 0;
+    sig.pcr = o.pcr == null ? 0 : clamp((o.pcr - 1.0) / 0.4);
+    sig.maxpain = o.max_pain ? clamp((o.max_pain - s) / (s * 0.01)) : 0;
+    var ce = 0, pe = 0;
+    (o.chain || []).forEach(function (r) { if (Math.abs(r.k - o.atm) <= 3 * o.step) { ce += r.ce_chg || 0; pe += r.pe_chg || 0; } });
+    sig.oi = (Math.abs(ce) + Math.abs(pe)) ? clamp((pe - ce) / (Math.abs(ce) + Math.abs(pe))) : 0;   // put writing = bullish
+    sig.momentum = ctx.pct == null ? 0 : clamp(ctx.pct / 0.8);
+    var b = sig.outlook * 0.35 + sig.pcr * 0.15 + sig.maxpain * 0.1 + sig.oi * 0.2 + sig.momentum * 0.2;
     if (aiBias === "bullish") b += 0.1; else if (aiBias === "bearish") b -= 0.1;
-    var r = { score: Math.round(b * 100) / 100 }, prem = null;
-    if (b >= 0.2) {
-      prem = o.atm_ce;
-      r.bias = "bullish"; r.action = "BUY_CE"; r.strike = o.atm; r.opt = "CE"; r.premium = prem;
+
+    var today = new Date(Date.now() + 5.5 * 3600000); today = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+    var ed = expiryDate(o.expiry);
+    var dte = ed ? Math.round((ed - today) / 86400000) : null;
+    var expDay = dte === 0;
+    var r = { score: Math.round(b * 100) / 100, signals: sig, dte: dte, expiryDay: expDay };
+    var prem = null;
+    if (b >= 0.15) {
+      prem = o.atm_ce; r.bias = "bullish"; r.action = "BUY_CE"; r.opt = "CE";
       r.spread = { buy: o.atm, sell: o.resistance && o.resistance > o.atm ? o.resistance : o.atm + 2 * o.step };
-      r.trigger = Math.round(s); r.target_level = o.resistance; r.stop_level = o.support;
-    } else if (b <= -0.2) {
-      prem = o.atm_pe;
-      r.bias = "bearish"; r.action = "BUY_PE"; r.strike = o.atm; r.opt = "PE"; r.premium = prem;
+      r.target_level = o.resistance; r.stop_level = o.support;
+    } else if (b <= -0.15) {
+      prem = o.atm_pe; r.bias = "bearish"; r.action = "BUY_PE"; r.opt = "PE";
       r.spread = { buy: o.atm, sell: o.support && o.support < o.atm ? o.support : o.atm - 2 * o.step };
-      r.trigger = Math.round(s); r.target_level = o.support; r.stop_level = o.resistance;
+      r.target_level = o.support; r.stop_level = o.resistance;
     } else {
       r.bias = "neutral"; r.action = "WAIT"; r.trigger_up = o.resistance; r.trigger_down = o.support;
     }
-    if (prem) { r.sl_premium = Math.round(prem * 0.7 * 10) / 10; r.target_premium = Math.round(prem * 1.5 * 10) / 10; }
-    r.confidence = Math.abs(b) >= 0.45 ? "medium" : "low";
+    r.strike = o.atm; r.trigger = Math.round(s); r.premium = prem;
+    if (prem) {
+      var slPct = expDay ? 0.25 : 0.30, t1 = expDay ? 0.30 : 0.40, t2 = expDay ? 0.60 : 0.80;
+      r.buy_low = r1(prem * 0.93); r.buy_high = r1(prem * 1.02);
+      r.sl_premium = r1(prem * (1 - slPct)); r.sl_pct = Math.round(slPct * 100);
+      r.target_premium = r1(prem * (1 + t1)); r.target2_premium = r1(prem * (1 + t2));
+      r.exit_by = expDay ? "14:30" : null;
+    }
+    r.confidence = Math.abs(b) >= 0.6 ? "high" : Math.abs(b) >= 0.35 ? "medium" : "low";
     return r;
   }
 
@@ -306,6 +352,7 @@
         m.time = ch.time;               // exchange timestamp (NSE) if given
         m.fetched_at = new Date().toISOString();
         m.source = cfg.ex;
+        m.index = cfg.idx || null;
         return m;
       });
     });

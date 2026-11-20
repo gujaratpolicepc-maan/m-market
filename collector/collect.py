@@ -606,6 +606,27 @@ def collect_markets(sources, prev_markets=None):
     return out, status
 
 
+def metals_rule(markets):
+    """Simple multi-factor view for gold & silver when AI is not available."""
+    def g(name):
+        for grp in ("macro", "global"):
+            for q in markets.get(grp, []):
+                if q["name"] == name and q.get("pct") is not None and not q.get("stale"):
+                    return q["pct"]
+        return 0.0
+    dxy, y10, vix, gold, silver, spx = g("Dollar Index"), g("US 10Y Yield"), g("US VIX"), g("Gold"), g("Silver"), g("S&P 500 Futures")
+    out = {}
+    for key, own, extra in (("gold", gold, 0.02 * vix), ("silver", silver, 0.15 * spx)):
+        score = -1.0 * dxy - 0.15 * y10 + 0.5 * own + extra
+        trend = "up" if score > 0.25 else "down" if score < -0.25 else "sideways"
+        gu = (f"ડોલર ઇન્ડેક્સ {dxy:+.2f}%, US યીલ્ડ {y10:+.2f}%, આજે {own:+.2f}% — "
+              f"{'ડોલર નબળો/યીલ્ડ નીચે હોવાથી ટેકો' if score > 0.25 else 'ડોલર મજબૂત/યીલ્ડ ઉપર હોવાથી દબાણ' if score < -0.25 else 'મિશ્ર સંકેત'}")
+        en = (f"Dollar index {dxy:+.2f}%, US yield {y10:+.2f}%, today {own:+.2f}% — "
+              f"{'support from a weaker dollar/lower yields' if score > 0.25 else 'pressure from a stronger dollar/higher yields' if score < -0.25 else 'mixed signals'}")
+        out[key] = {"trend": trend, "score": round(score, 2), "outlook_gu": gu, "outlook_en": en}
+    return out
+
+
 def collect_metals_india():
     out = []
     for sym in ("GOLDBEES", "SILVERBEES"):
@@ -925,7 +946,7 @@ def run_ai(news, markets, prev, session, phase, now_ist, options=None):
         return None, "no_key"
     interval = int(os.environ.get("AI_MIN_INTERVAL_MIN", "120") or 120)
     force = os.environ.get("AI_FORCE", "") == "1"
-    if prev_ai and prev_ai.get("generated_at") and not force and prev_ai.get("schema") == 2:
+    if prev_ai and prev_ai.get("generated_at") and not force and prev_ai.get("schema") == 3:
         try:
             age = (now_utc() - datetime.fromisoformat(prev_ai["generated_at"])).total_seconds() / 60
             same_session = prev_ai.get("session") == str(session)
@@ -975,7 +996,7 @@ def run_ai(news, markets, prev, session, phase, now_ist, options=None):
     res["generated_at"] = now_utc().isoformat()
     res["session"] = str(session)
     res["model"] = model
-    res["schema"] = 2
+    res["schema"] = 3
     return res, "ok"
 
 
@@ -1247,6 +1268,7 @@ def main():
         "news": news,
         "options": options,
         "metals_india": metals_india,
+        "metals_rule": metals_rule(markets),
         "sources": feed_status + mkt_status + opt_status,
     }
     data["history"] = update_history(prev, outlook, ai, markets, session, phase, now_ist, options)

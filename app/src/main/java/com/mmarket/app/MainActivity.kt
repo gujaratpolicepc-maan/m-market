@@ -23,6 +23,7 @@ class MainActivity : Activity() {
     private val appHost = "appassets.androidplatform.net"
     private var pendingOpen: String? = null
     private var pageReady = false
+    private var hidden: HiddenBrowser? = null
 
     @SuppressLint("SetJavaScriptEnabled", "JavascriptInterface")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -128,6 +129,18 @@ class MainActivity : Activity() {
             LiveHttp.get(url) { code, body ->
                 val js = "window.mmHttpCb && window.mmHttpCb(" + JSONObject.quote(id) + "," + code + "," + JSONObject.quote(body) + ")"
                 webView.post { webView.evaluateJavascript(js, null) }
+            }
+        }
+
+        /** Same as http() but runs inside an invisible browser that has opened pageUrl first (for BSE). */
+        @JavascriptInterface
+        fun httpBrowser(id: String, pageUrl: String, apiUrl: String) {
+            runOnUiThread {
+                val hb = hidden ?: HiddenBrowser(this@MainActivity) { rid, code, body ->
+                    val js = "window.mmHttpCb && window.mmHttpCb(" + JSONObject.quote(rid) + "," + code + "," + JSONObject.quote(body) + ")"
+                    webView.post { webView.evaluateJavascript(js, null) }
+                }.also { hidden = it }
+                hb.fetch(id, pageUrl, apiUrl)
             }
         }
 
