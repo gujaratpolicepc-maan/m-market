@@ -125,6 +125,24 @@
    "lang": "en",
    "region": "global",
    "url": "https://news.google.com/rss/search?q=asian+markets+stocks+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+   "name": "Google News: Gold price (global)",
+   "lang": "en",
+   "region": "global",
+   "url": "https://news.google.com/rss/search?q=gold+price+OR+silver+price+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+   "name": "Google News: Gold & silver India",
+   "lang": "en",
+   "region": "india",
+   "url": "https://news.google.com/rss/search?q=gold+silver+price+India+MCX+when:1d&hl=en-IN&gl=IN&ceid=IN:en"
+  },
+  {
+   "name": "Google News: सोना चांदी भाव",
+   "lang": "hi",
+   "region": "india",
+   "url": "https://news.google.com/rss/search?q=%E0%A4%B8%E0%A5%8B%E0%A4%A8%E0%A4%BE+%E0%A4%9A%E0%A4%BE%E0%A4%82%E0%A4%A6%E0%A5%80+%E0%A4%AD%E0%A4%BE%E0%A4%B5+when:1d&hl=hi&gl=IN&ceid=IN:hi"
   }
  ],
  "markets": {
@@ -231,6 +249,11 @@
    {
     "sym": "GC=F",
     "name": "Gold",
+    "w": 0.0
+   },
+   {
+    "sym": "SI=F",
+    "name": "Silver",
     "w": 0.0
    },
    {

@@ -122,6 +122,15 @@ class MainActivity : Activity() {
             MarketWorker.schedule(applicationContext, notify)
         }
 
+        /** Live data: JS calls MMNative.http(id, url); result arrives in window.mmHttpCb(id, status, body). */
+        @JavascriptInterface
+        fun http(id: String, url: String) {
+            LiveHttp.get(url) { code, body ->
+                val js = "window.mmHttpCb && window.mmHttpCb(" + JSONObject.quote(id) + "," + code + "," + JSONObject.quote(body) + ")"
+                webView.post { webView.evaluateJavascript(js, null) }
+            }
+        }
+
         @JavascriptInterface
         fun requestNotifications() {
             runOnUiThread {

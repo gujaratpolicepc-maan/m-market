@@ -226,8 +226,12 @@ EXPLAIN_RX = re.compile(
     r"लाइव अपडेट|देखें लिस्ट)", re.I)
 
 
+METAL_RX = re.compile(r"(?<![a-z])(gold|silver|bullion|comex|सोना|सोने|चांदी|चाँदी|सर्राफा)(?![a-z])", re.I)
+
+
 def tag_item(item, stocks, sector_kw):
     text = (item["title"] + " " + item.get("desc", "")).lower()
+    item["metal"] = bool(METAL_RX.search(item["title"]))
     title = item["title"].lower()
     syms, secs = [], set()
     for s in stocks:
@@ -325,6 +329,7 @@ CNBC = {  # yahoo symbol -> CNBC quote symbol
     "^N225": ".N225", "^HSI": ".HSI", "^FTSE": ".FTSE", "^GDAXI": ".GDAXI", "BZ=F": "@LCO.1",
     "GC=F": "@GC.1", "INR=X": "INR=", "DX-Y.NYB": ".DXY", "^TNX": "US10Y", "^VIX": ".VIX",
     "^BSESN": [".BSESN", ".SENSEX", "SENSEX"], "BANKEX": [".BSEBANK", ".BANKEX", "BANKEX"],
+    "SI=F": "@SI.1", "^NSEI": [".NSEI"], "^NSEBANK": [".NSEBANK"],
 }
 
 
@@ -446,7 +451,7 @@ def _pick(d, keys):
 
 BSE_INDEX = {  # our symbol -> sources to try
     "^BSESN": {"bse": "SENSEX", "mc": ["in%3BSEN"], "google": "SENSEX:INDEXBOM"},
-    "BANKEX": {"bse": "BANKEX", "mc": ["in%3BBKX", "in%3Bbkx"], "google": "BANKEX:INDEXBOM"},
+    "BANKEX": {"bse": "BANKEX", "mc": ["in%3BBKX", "in%3Bbkx", "in%3BBANKEX", "in%3Bbankex"], "google": "BANKEX:INDEXBOM"},
 }
 
 
@@ -599,6 +604,22 @@ def collect_markets(sources, prev_markets=None):
     if missing:
         status.append({"name": "ભાવ ન મળ્યા", "ok": False, "error": ", ".join(missing)[:150]})
     return out, status
+
+
+def collect_metals_india():
+    out = []
+    for sym in ("GOLDBEES", "SILVERBEES"):
+        try:
+            r = nse_session().get("https://www.nseindia.com/api/quote-equity", params={"symbol": sym}, timeout=15)
+            r.raise_for_status()
+            p = r.json().get("priceInfo", {})
+            q = _q(p.get("lastPrice"), p.get("previousClose"))
+            if q:
+                q.update({"name": sym, "sym": sym})
+                out.append(q)
+        except Exception as e:
+            log("etf failed", sym, e)
+    return out
 
 
 def collect_fii_dii():
@@ -833,6 +854,10 @@ Return ONLY JSON with exactly this shape. Every *_gu field in simple Gujarati, e
                 "view": "positive|neutral|negative", "reason_gu": "one line", "reason_en": "one line"}}],
   "items": [{{"i": 0, "impact": 0, "symbols": ["NSE symbols"], "gu": "one-line Gujarati meaning & impact", "en": "one-line English impact"}}],
   "watch": [{{"symbol": "NSE symbol", "view": "positive|negative", "reason_gu": "why in focus", "reason_en": "why in focus"}}],
+  "metals": {{
+    "gold": {{"trend": "up|down|sideways", "outlook_gu": "2 lines: trend for the coming days (global + India factors: dollar, yields, Fed, geopolitics, import duty, festive/wedding demand)", "outlook_en": "same"}},
+    "silver": {{"trend": "up|down|sideways", "outlook_gu": "2 lines incl. industrial demand", "outlook_en": "same"}}
+  }},
   "fo": {{
     "nifty": {{"bias": "bullish|bearish|neutral", "note_gu": "2 lines: view for the session with key levels", "note_en": "same"}},
     "banknifty": {{"bias": "bullish|bearish|neutral", "note_gu": "2 lines", "note_en": "same"}},
@@ -1077,6 +1102,7 @@ def option_metrics(symbol, name, step):
     a = strikes[atm]
     ivs = [v for v in (a["ce_iv"], a["pe_iv"]) if v]
     return {"symbol": symbol, "name": name, "spot": round(spot, 2), "expiry": exp, "step": step,
+            "fetched_at": now_utc().isoformat(),
             "pcr": round(tot_pe / tot_ce, 2), "max_pain": max_pain, "support": support, "resistance": resistance,
             "atm": atm, "atm_ce": a["ce_ltp"], "atm_pe": a["pe_ltp"],
             "iv": round(sum(ivs) / len(ivs), 1) if ivs else None,
@@ -1192,6 +1218,7 @@ def main():
     markets, mkt_status = collect_markets(sources, prev.get("markets"))
     fii = collect_fii_dii() or prev.get("fii_dii")
     options, opt_status = collect_options()
+    metals_india = collect_metals_india() or prev.get("metals_india") or []
     if not options and prev.get("options"):
         options = prev["options"]
         for o in options.values():
@@ -1219,6 +1246,7 @@ def main():
         "stock_list": [[s[0], s[1], s[2]] for s in stocks_cfg["stocks"]],
         "news": news,
         "options": options,
+        "metals_india": metals_india,
         "sources": feed_status + mkt_status + opt_status,
     }
     data["history"] = update_history(prev, outlook, ai, markets, session, phase, now_ist, options)

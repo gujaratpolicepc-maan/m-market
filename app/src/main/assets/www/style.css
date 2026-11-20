@@ -126,3 +126,19 @@ main{padding:12px 12px 90px}
 .chipq .v{font-size:15px;font-weight:800}
 .chipq .p{font-size:12.5px;font-weight:700}
 [id^=fo-]{scroll-margin-top:70px}
+.tabs button{font-size:12px}
+.strip-h{margin:-2px 2px 6px}
+.ts{background:#12324a;color:#BFE3FF;border-radius:10px;padding:8px 10px;font-size:12.5px;margin-bottom:10px}
+.atm{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:10px 0}
+.atm-h{font-weight:700;margin-bottom:6px}
+.atm-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px}
+.big2{font-size:20px;font-weight:800}
+.tbl-wrap{overflow-x:auto;margin:0 -4px}
+table.chain{width:100%;border-collapse:collapse;font-size:12px;text-align:center}
+table.chain th{color:var(--mut);font-weight:600;padding:5px 2px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.chain td{padding:6px 2px;border-bottom:1px solid #1d2530;white-space:nowrap}
+table.chain td.stk{font-weight:800;background:#1B2430}
+table.chain tr.atm-r td{background:rgba(124,242,180,.10)} table.chain tr.atm-r td.stk{color:var(--acc)}
+table.chain tr.res-r td.stk{color:var(--neg)} table.chain tr.sup-r td.stk{color:var(--pos)}
+.err-inline{background:var(--neg-bg);color:#FCA5A5;border-radius:10px;padding:8px 10px;font-size:12.5px;margin-bottom:10px}
+select{background:var(--card2);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font:inherit;margin:2px 0 8px}

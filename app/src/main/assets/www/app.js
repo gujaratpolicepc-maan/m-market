@@ -17,7 +17,7 @@
     lang: PREF.lang || "gu", showTr: PREF.showTr !== false, notify: !!PREF.notify
   };
   function savePrefs() {
-    store("mm_prefs", { lang: state.lang, showTr: state.showTr, notify: state.notify });
+    store("mm_prefs", { lang: state.lang, showTr: state.showTr, notify: state.notify, foSel: state.live ? state.live.sel : undefined });
     syncNative();
   }
 
@@ -25,7 +25,17 @@
   var T = {
     gu: {
       loading: "લોડ થઈ રહ્યું છે…", updated: "અપડેટ", now: "હમણાં", minAgo: " મિનિટ પહેલાં", hrAgo: " કલાક પહેલાં", dayAgo: " દિવસ પહેલાં",
-      tabs: ["હોમ", "સમાચાર", "ગ્લોબલ", "શેર", "સેક્ટર", "F&O"],
+      tabs: ["હોમ", "સમાચાર", "શેર", "F&O", "વધુ"],
+      liveAt: "લાઇવ", ghAt: "GitHub અપડેટ", dataTime: "ડેટા સમય", srcLive: "લાઇવ (ફોન → ", srcGh: "GitHub (દર 10–20 મિનિટે)",
+      loadingOpt: "ઓપ્શન ચેઇન લોડ થઈ રહી છે…", optErr: "લાઇવ ડેટા ન મળ્યો", showingGh: "GitHub નો છેલ્લો ડેટા બતાવું છું.",
+      expiryL: "એક્સપાયરી પસંદ કરો", atmCard: "🎯 ATM પ્રીમિયમ (આ એક્સપાયરી માટે)", straddle: "સ્ટ્રેડલ (CE+PE)", expMove: "અપેક્ષિત મૂવ (એક્સપાયરી સુધી) ±",
+      chainT: "📋 ઓપ્શન ચેઇન (ATM ની આસપાસ)", chainH: ["CE OI", "CE ΔOI", "CE ₹", "સ્ટ્રાઇક", "PE ₹", "PE ΔOI", "PE OI"],
+      autoNote: "બજાર સમયે દર 5 મિનિટે આપમેળે અપડેટ. ⟳ દબાવો તો તરત.",
+      bseLiveNote: "BSE (Sensex/BANKEX) નો ડેટા BSE ની સાઇટ પરથી સીધો લેવાય છે — આ સુવિધા પ્રયોગાત્મક છે.",
+      noLive: "લાઇવ ડેટા ફક્ત એપમાં (ફોન પર) મળે છે.",
+      metals: "🥇 સોનું અને ચાંદી", gold: "સોનું (COMEX $/oz)", silver: "ચાંદી (COMEX $/oz)", goldbees: "GOLDBEES (ભારત ETF ₹)", silverbees: "SILVERBEES (ભારત ETF ₹)",
+      trend: { up: "📈 તેજી તરફ", down: "📉 મંદી તરફ", sideways: "↔ સાઇડવેઝ" }, trendNext: "આગામી દિવસોનો ટ્રેન્ડ", todayTrend: "આજની ચાલ પરથી",
+      metalNews: "ગોલ્ડ/સિલ્વર સમાચાર", allMetalNews: "બધા ગોલ્ડ/સિલ્વર સમાચાર →", sectorsT: "📊 સેક્ટર",
       setupErr: "એપ સેટઅપ અધૂરું છે: રિપોઝિટરીનું નામ મળ્યું નથી. GitHub Actions થી બનેલું APK જ ઇન્સ્ટોલ કરો.",
       noData: "હજુ ડેટા તૈયાર નથી. GitHub માં ‘Collect market data’ workflow એક વાર ચાલવા દો, પછી ⟳ દબાવો.",
       netErr: "ઇન્ટરનેટ / ડેટા લોડ ન થયો. છેલ્લો સાચવેલો ડેટા બતાવું છું.",
@@ -78,7 +88,17 @@
     },
     en: {
       loading: "Loading…", updated: "Updated", now: "just now", minAgo: " min ago", hrAgo: " h ago", dayAgo: " d ago",
-      tabs: ["Home", "News", "Global", "Stocks", "Sectors", "F&O"],
+      tabs: ["Home", "News", "Stocks", "F&O", "More"],
+      liveAt: "Live", ghAt: "GitHub update", dataTime: "Data time", srcLive: "Live (phone → ", srcGh: "GitHub (every 10–20 min)",
+      loadingOpt: "Loading option chain…", optErr: "Live data not available", showingGh: "Showing the last GitHub data.",
+      expiryL: "Choose expiry", atmCard: "🎯 ATM premium (this expiry)", straddle: "Straddle (CE+PE)", expMove: "Expected move till expiry ±",
+      chainT: "📋 Option chain (around ATM)", chainH: ["CE OI", "CE ΔOI", "CE ₹", "Strike", "PE ₹", "PE ΔOI", "PE OI"],
+      autoNote: "Auto-updates every 5 minutes. Tap ⟳ for an instant refresh.",
+      bseLiveNote: "BSE (Sensex/BANKEX) data is read directly from the BSE website — this feature is experimental.",
+      noLive: "Live data works only inside the app (on the phone).",
+      metals: "🥇 Gold & Silver", gold: "Gold (COMEX $/oz)", silver: "Silver (COMEX $/oz)", goldbees: "GOLDBEES (India ETF ₹)", silverbees: "SILVERBEES (India ETF ₹)",
+      trend: { up: "📈 Upward", down: "📉 Downward", sideways: "↔ Sideways" }, trendNext: "Trend for coming days", todayTrend: "from today's move",
+      metalNews: "Gold/Silver news", allMetalNews: "All gold/silver news →", sectorsT: "📊 Sectors",
       setupErr: "Setup incomplete: repository name missing. Install the APK built by GitHub Actions.",
       noData: "No data yet. Let the ‘Collect market data’ workflow run once on GitHub, then tap ⟳.",
       netErr: "Could not load data. Showing the last saved data.",
@@ -175,6 +195,20 @@
   }
   function impactOf(n) { return typeof n.ai_impact === "number" ? n.ai_impact / 2 : (n.sent || 0); }
   function watchlist() { return store("mm_watch") || []; }
+  var LIVE = window.MMLive || { available: false };
+  state.live = { idx: null, idxTime: null, idxErr: [], opt: {}, optErr: {}, optLoading: {}, exp: {}, sel: PREF.foSel || "nifty" };
+  function fmtDT(v) { // ISO / Date / NSE "20-Nov-2026 11:25:30" -> "20 નવે 2026, 11:25:30" (IST)
+    if (!v) return "—";
+    if (typeof v === "string" && /^\d{2}-[A-Za-z]{3}-\d{4}/.test(v)) {
+      var p = v.split(/[- ]/), mi = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].indexOf(p[1]);
+      return parseInt(p[0], 10) + " " + (MONTHS[state.lang][mi] || p[1]) + " " + p[2] + ", " + (p[3] || "");
+    }
+    var d = new Date(new Date(v).getTime() + 5.5 * 3600000);
+    if (isNaN(d)) return String(v);
+    function z(n) { return (n < 10 ? "0" : "") + n; }
+    return d.getUTCDate() + " " + MONTHS[state.lang][d.getUTCMonth()] + " " + d.getUTCFullYear() + ", " + z(d.getUTCHours()) + ":" + z(d.getUTCMinutes()) + ":" + z(d.getUTCSeconds());
+  }
+  function finalLabel(d) { return (d.ai && d.ai.outlook && d.ai.outlook.label) || (d.outlook && d.outlook.label) || "neutral"; }
 
   // ---------- native bridge (notifications) ----------
   function syncNative() {
@@ -236,10 +270,10 @@
   function render() {
     renderChrome();
     var d = state.data;
-    $("updated").textContent = d ? t("updated") + ": " + ago(d.generated_at) : t("loading");
+    $("updated").textContent = d ? (state.live.idxTime ? "🟢 " + t("liveAt") + " " + fmtDT(state.live.idxTime).split(", ")[1] + " · " : "") + t("updated") + ": " + ago(d.generated_at) : t("loading");
     var v = $("view");
     if (!d) { v.innerHTML = "<div class='empty'>" + t("loading") + "</div>"; return; }
-    v.innerHTML = { home: renderHome, news: renderNews, global: renderGlobal, stocks: renderStocks, sectors: renderSectors, fo: renderFO }[state.tab](d);
+    v.innerHTML = ({ home: renderHome, news: renderNews, stocks: renderStocks, fo: renderFO, more: renderMore }[state.tab] || renderHome)(d);
     bindView();
   }
 
@@ -280,6 +314,7 @@
         return "<div class='row'><div class='l'><b>" + esc(r.category) + "</b><div class='muted small'>" + esc(r.date) + "</div></div><div class='r " + cls(n) + "-t'><b>" + (n > 0 ? "+" : "") + esc(r.net) + "</b><div class='muted small'>" + t("buy") + " " + esc(r.buy) + " · " + t("sell") + " " + esc(r.sell) + "</div></div></div>";
       }).join("") + "</div>";
     }
+    h += metalsCard(d);
     if (ai && ai.watch && ai.watch.length) {
       h += "<div class='card'><h3>" + t("focus") + "</h3>" + ai.watch.map(function (w) {
         var c = w.view === "positive" ? "pos" : w.view === "negative" ? "neg" : "neu";
@@ -293,12 +328,20 @@
   }
 
   function indexStrip(d) {
-    var ind = (d.markets && d.markets.india) || [];
-    if (!ind.length) return "";
-    return "<div class='strip'>" + ind.map(function (q) {
-      var good = q.name.indexOf("VIX") >= 0 ? -(q.pct || 0) : (q.pct || 0);
-      return "<div class='chipq " + cls(good) + "'><div class='n'>" + esc(q.name) + (q.stale ? " ⏳" : "") + "</div><div class='v'>" + num(q.price) + "</div><div class='p " + cls(good) + "-t'>" + pct(q.pct) + "</div></div>";
-    }).join("") + "</div>";
+    var base = (d.markets && d.markets.india) || [], lv = state.live.idx || {};
+    var names = base.map(function (q) { return q.name; });
+    ["Nifty 50", "Sensex", "Bank Nifty", "BANKEX"].forEach(function (n) { if (names.indexOf(n) < 0 && lv[n]) names.push(n); });
+    if (!names.length) return "";
+    var anyLive = false;
+    var cells = names.map(function (n) {
+      var q = lv[n], live = !!q;
+      if (!q) q = base.filter(function (x) { return x.name === n; })[0] || {};
+      if (live) anyLive = true;
+      var good = n.indexOf("VIX") >= 0 ? -(q.pct || 0) : (q.pct || 0);
+      return "<div class='chipq " + (q.price == null ? "" : cls(good)) + "'><div class='n'>" + esc(n) + (!live && q.stale ? " ⏳" : "") + "</div><div class='v'>" + num(q.price) + "</div><div class='p " + cls(good) + "-t'>" + pct(q.pct) + "</div></div>";
+    }).join("");
+    var when = anyLive ? "🟢 " + t("liveAt") + ": " + fmtDT(state.live.idxTime) : "🕒 " + t("ghAt") + ": " + fmtDT(d.generated_at);
+    return "<div class='strip-h muted small'>" + when + "</div><div class='strip'>" + cells + "</div>";
   }
 
   function foMini(d) {
@@ -308,6 +351,36 @@
     return "<div class='card' data-tab-go='fo'><h3>F&O · Nifty " + esc(o.expiry || "") + "</h3><div class='row'><div class='l'>" +
       "<span class='badge " + (b === "bullish" ? "pos" : b === "bearish" ? "neg" : "neu") + "'>" + t("bias")[b] + "</span> " +
       "<span class='muted small'>PCR " + o.pcr + " · " + t("support").split(" ")[0] + " " + (o.support || "—") + " · " + t("resistance").split(" ")[0] + " " + (o.resistance || "—") + "</span></div><div class='r'>›</div></div></div>";
+  }
+
+  function metalQ(d, name) {
+    var lv = state.live.idx || {};
+    if (lv[name]) return lv[name];
+    var all = [].concat((d.markets && d.markets.macro) || [], (d.metals_india) || []);
+    return all.filter(function (q) { return q.name === name || q.sym === name; })[0] || null;
+  }
+  function metalsCard(d) {
+    var rows = [["Gold", t("gold"), "gold"], ["Silver", t("silver"), "silver"]];
+    var etf = [["GOLDBEES", t("goldbees")], ["SILVERBEES", t("silverbees")]];
+    var aim = (d.ai && d.ai.metals) || {};
+    var any = false;
+    var h = "<div class='card'><h3>" + t("metals") + "</h3>";
+    rows.forEach(function (r) {
+      var q = metalQ(d, r[0]); if (!q) return; any = true;
+      var a = aim[r[2]] || null;
+      var tr = a && a.trend ? a.trend : (q.pct > 0.3 ? "up" : q.pct < -0.3 ? "down" : "sideways");
+      var c = tr === "up" ? "pos" : tr === "down" ? "neg" : "neu";
+      h += "<div class='row'><div class='l'><b>" + r[1] + "</b><div class='small'><span class='badge " + c + "'>" + t("trend")[tr] + "</span> <span class='muted'>" + (a ? t("trendNext") : t("todayTrend")) + "</span></div>" +
+        (a ? "<div class='muted small'>🤖 " + esc(tx(a, "outlook")) + "</div>" : "") +
+        "</div><div class='r'><div>" + num(q.price) + "</div><div class='" + cls(q.pct || 0) + "-t'><b>" + pct(q.pct) + "</b></div></div></div>";
+    });
+    etf.forEach(function (r) {
+      var q = metalQ(d, r[0]); if (!q) return; any = true;
+      h += "<div class='row'><div class='l small'>" + r[1] + "</div><div class='r'><span>₹" + num(q.price) + "</span> <b class='" + cls(q.pct || 0) + "-t'>" + pct(q.pct) + "</b></div></div>";
+    });
+    var mn = (d.news || []).filter(function (n) { return n.metal; });
+    if (mn.length) h += "<h3 style='margin-top:10px'>" + t("metalNews") + "</h3>" + mn.slice(0, 3).map(function (n) { return newsCard(n); }).join("") + "<button class='chip' data-metal-news='1'>" + t("allMetalNews") + "</button>";
+    return any || mn.length ? h + "</div>" : "";
   }
 
   function historyCard(d, field, title) {
@@ -364,6 +437,9 @@
     return h;
   }
 
+  function renderMore(d) {
+    return renderGlobal(d) + "<div class='card'><h3>" + t("sectorsT") + "</h3>" + renderSectors(d) + "</div>";
+  }
   function renderGlobal(d) {
     var m = d.markets || {}, h = "";
     var g = tx(d.ai, "global");
@@ -451,19 +527,62 @@
   }
 
   // ---------- F&O ----------
-  function foCard(o, aiPart) {
-    var i = o.idea || {}, b = i.bias || "neutral", n = o.name;
-    var h = "<div class='card'><h3>" + esc(n) + " · " + t("expiry") + " " + esc(o.expiry || "—") + (o.stale ? " · " + t("stale") : "") + "</h3>";
+  var FO_KEYS = ["nifty", "banknifty", "finnifty", "midcpnifty", "sensex", "bankex"];
+  var FO_NAMES = { nifty: "Nifty", banknifty: "Bank Nifty", finnifty: "Fin Nifty", midcpnifty: "Midcap Select", sensex: "Sensex", bankex: "BANKEX" };
+
+  function loadOpt(key, expiry) {
+    if (!LIVE.available) return;
+    var L = state.live;
+    L.optLoading[key] = true;
+    if (state.tab === "fo") render();
+    var hintName = { nifty: "Nifty 50", banknifty: "Bank Nifty", finnifty: "Fin Nifty", midcpnifty: "Midcap Select", sensex: "Sensex", bankex: "BANKEX" }[key];
+    var hint = L.idx && L.idx[hintName] ? L.idx[hintName].price : null;
+    LIVE.options(key, expiry || L.exp[key], hint).then(function (m) {
+      L.opt[key] = m; L.optErr[key] = null; L.exp[key] = m.expiry;
+    }, function (e) {
+      L.optErr[key] = e.message || String(e);
+    }).then(function () {
+      L.optLoading[key] = false;
+      if (state.tab === "fo") render();
+    });
+  }
+
+  function foCard(o, aiPart, ideaObj, meta) {
+    var i = ideaObj || {}, b = i.bias || "neutral", n = o.name;
+    var h = "<div class='card'><h3>" + esc(n) + " · " + t("expiry") + " " + esc(o.expiry || "—") + "</h3>";
+    h += "<div class='ts'>🕒 " + t("dataTime") + ": <b>" + meta.time + "</b><br>" + meta.src + "</div>";
+    if (o.expiries && o.expiries.length > 1) {
+      h += "<label class='muted small'>" + t("expiryL") + ": <select id='expSel'>" + o.expiries.map(function (e) { return "<option" + (e === o.expiry ? " selected" : "") + ">" + esc(e) + "</option>"; }).join("") + "</select></label>";
+    }
+    // ATM premium
+    h += "<div class='atm'><div class='atm-h'>" + t("atmCard") + "</div><div class='atm-row'>" +
+      "<div><div class='muted small'>ATM</div><div class='big2'>" + (o.atm || "—") + "</div></div>" +
+      "<div><div class='muted small'>CE ₹</div><div class='big2 pos-t'>" + (o.atm_ce == null ? "—" : o.atm_ce) + "</div></div>" +
+      "<div><div class='muted small'>PE ₹</div><div class='big2 neg-t'>" + (o.atm_pe == null ? "—" : o.atm_pe) + "</div></div></div>";
+    var st = o.straddle || ((o.atm_ce || 0) + (o.atm_pe || 0));
+    if (st) h += "<div class='small'>" + t("straddle") + ": <b>₹" + Math.round(st * 10) / 10 + "</b> · " + t("expMove") + "<b>" + Math.round(st) + "</b> (" + (o.atm ? Math.round(o.atm - st) + " – " + Math.round(o.atm + st) : "") + ")</div>";
+    h += "<div class='muted small'>" + t("iv") + " " + (o.iv == null ? "—" : o.iv + "%") + "</div></div>";
     h += "<div class='grid'>" +
       "<div class='tile'><div class='n'>" + t("spot") + "</div><div class='v'>" + num(o.spot) + "</div></div>" +
-      "<div class='tile'><div class='n'>" + t("pcr") + "</div><div class='v'>" + o.pcr + "</div><div class='p muted'>" + esc(t("pcrMean")(o.pcr)) + "</div></div>" +
+      "<div class='tile'><div class='n'>" + t("pcr") + "</div><div class='v'>" + (o.pcr == null ? "—" : o.pcr) + "</div><div class='p muted'>" + (o.pcr == null ? "" : esc(t("pcrMean")(o.pcr))) + "</div></div>" +
       "<div class='tile'><div class='n'>" + t("support") + "</div><div class='v pos-t'>" + (o.support || "—") + "</div></div>" +
       "<div class='tile'><div class='n'>" + t("resistance") + "</div><div class='v neg-t'>" + (o.resistance || "—") + "</div></div>" +
       "<div class='tile'><div class='n'>" + t("maxPain") + "</div><div class='v'>" + (o.max_pain || "—") + "</div></div>" +
-      "<div class='tile'><div class='n'>" + t("atmPrem") + " (" + o.atm + ")</div><div class='v small'>CE ₹" + (o.atm_ce == null ? "—" : o.atm_ce) + " · PE ₹" + (o.atm_pe == null ? "—" : o.atm_pe) + "</div><div class='p muted'>" + t("iv") + " " + (o.iv == null ? "—" : o.iv + "%") + "</div></div>" +
-      "</div>";
+      "<div class='tile'><div class='n'>OTM CE / PE ₹</div><div class='v small'>" + (o.otm_ce == null ? "—" : o.otm_ce) + " / " + (o.otm_pe == null ? "—" : o.otm_pe) + "</div></div></div>";
+    // mini chain
+    if (o.chain && o.chain.length) {
+      var hd = t("chainH");
+      h += "<h3 style='margin-top:12px'>" + t("chainT") + "</h3><div class='tbl-wrap'><table class='chain'><tr>" + hd.map(function (x) { return "<th>" + x + "</th>"; }).join("") + "</tr>" +
+        o.chain.map(function (r) {
+          var c = r.k === o.atm ? "atm-r" : r.k === o.resistance ? "res-r" : r.k === o.support ? "sup-r" : "";
+          function k(v) { return v == null ? "—" : Math.abs(v) >= 100000 ? (v / 100000).toFixed(1) + "L" : Math.abs(v) >= 1000 ? (v / 1000).toFixed(1) + "K" : v; }
+          return "<tr class='" + c + "'><td>" + k(r.ce_oi) + "</td><td class='" + cls(r.ce_chg) + "-t'>" + k(r.ce_chg) + "</td><td>" + (r.ce_ltp == null ? "—" : r.ce_ltp) + "</td><td class='stk'>" + r.k + "</td><td>" + (r.pe_ltp == null ? "—" : r.pe_ltp) + "</td><td class='" + cls(r.pe_chg) + "-t'>" + k(r.pe_chg) + "</td><td>" + k(r.pe_oi) + "</td></tr>";
+        }).join("") + "</table></div>";
+    }
+    // idea
     h += "<div class='idea " + (b === "bullish" ? "pos" : b === "bearish" ? "neg" : "neu") + "'><div class='idea-h'>" + t("idea") + " <span class='badge " + (b === "bullish" ? "pos" : b === "bearish" ? "neg" : "neu") + "'>" + t("bias")[b] + "</span> <span class='badge'>" + t("confT") + ": " + t("conf")[i.confidence || "low"] + "</span></div>";
     if (i.action === "BUY_CE" || i.action === "BUY_PE") {
+      if (!i.spread.type) i.spread.type = i.opt;
       h += "<ul class='steps'><li>" + t("ideaBuy")(esc(n), i, esc(o.expiry || "")) + "</li><li>" + esc(t("ideaEntry")(n, i)) + "</li><li>" + esc(t("ideaSL")(n, i)) + "</li><li>" + esc(t("ideaTgt")(n, i)) + "</li>" +
         (i.spread ? "<li>" + esc(t("ideaSpread")(i)) + "</li>" : "") + "</ul>";
     } else {
@@ -474,15 +593,28 @@
     if (note) h += "<div class='muted' style='margin-top:8px'>" + t("aiView") + ": " + esc(note) + "</div>";
     return h + "</div>";
   }
+
   function renderFO(d) {
-    var h = indexStrip(d) + "<div class='warn'>" + t("foWarn") + "</div>";
-    var opts = d.options || {}, aiFo = (d.ai && d.ai.fo) || {};
-    var keys = ["nifty", "banknifty", "finnifty", "midcpnifty"].filter(function (k) { return opts[k]; });
-    if (keys.length > 1) h += "<div class='chips'>" + keys.map(function (k) { return "<button class='chip' data-jump='fo-" + k + "'>" + esc(opts[k].name) + "</button>"; }).join("") + "<button class='chip' data-jump='fo-bse'>Sensex / BANKEX</button></div>";
-    if (!keys.length) h += "<div class='empty'>" + t("foNoData") + "</div>";
-    keys.forEach(function (k) { h += "<div id='fo-" + k + "'>" + foCard(opts[k], aiFo[k]) + "</div>"; });
-    h += "<div class='card' id='fo-bse'><h3>Sensex / BANKEX options (BSE)</h3><div class='muted'>" + t("bseNote") + "</div></div>";
-    if (keys.length) h += "<div class='muted small' style='margin:-4px 4px 12px'>" + t("premAsOf") + ": " + ago(d.generated_at) + ". " + t("premNote") + "</div>";
+    var L = state.live, sel = L.sel, h = indexStrip(d) + "<div class='warn'>" + t("foWarn") + "</div>";
+    var gh = d.options || {}, aiFo = (d.ai && d.ai.fo) || {};
+    h += "<div class='chips'>" + FO_KEYS.map(function (k) { return "<button class='chip " + (k === sel ? "on" : "") + "' data-fo='" + k + "'>" + FO_NAMES[k] + "</button>"; }).join("") + "</div>";
+    var lv = L.opt[sel], o = null, meta = null, ideaObj = null;
+    if (lv) {
+      o = lv;
+      meta = { time: lv.time ? fmtDT(lv.time) + " (" + lv.source + ")" : fmtDT(lv.fetched_at), src: "🟢 " + t("srcLive") + lv.source + ")" };
+      ideaObj = LIVE.idea(lv, finalLabel(d), (aiFo[sel] || {}).bias);
+    } else if (gh[sel]) {
+      o = gh[sel];
+      meta = { time: fmtDT(o.fetched_at || d.generated_at) + (o.stale ? " ⏳" : ""), src: "🕒 " + t("srcGh") };
+      ideaObj = o.idea;
+    }
+    if (L.optLoading[sel]) h += "<div class='muted small' style='margin-bottom:8px'>⏳ " + t("loadingOpt") + "</div>";
+    if (L.optErr[sel]) h += "<div class='err-inline'>⚠️ " + t("optErr") + ": " + esc(L.optErr[sel]) + (gh[sel] && !lv ? " — " + t("showingGh") : "") + "</div>";
+    if (!LIVE.available && !o) h += "<div class='muted small'>" + t("noLive") + "</div>";
+    if (sel === "sensex" || sel === "bankex") h += "<div class='muted small' style='margin-bottom:8px'>ℹ️ " + t("bseLiveNote") + "</div>";
+    if (o) h += foCard(o, aiFo[sel], ideaObj, meta);
+    else if (!L.optLoading[sel]) h += "<div class='empty'>" + t("foNoData") + "</div>";
+    h += "<div class='muted small' style='margin:-4px 4px 12px'>" + t("autoNote") + " " + t("premNote") + "</div>";
     var st = aiFo.stocks || [];
     if (st.length) {
       h += "<div class='card'><h3>" + t("foStocks") + "</h3>" + st.map(function (s) {
@@ -542,6 +674,18 @@
         if ($("view").contains(el) && state.tab === "stocks") render();
       };
     });
+    root.querySelectorAll("[data-fo]").forEach(function (el) {
+      el.onclick = function () {
+        var k = el.getAttribute("data-fo"); state.live.sel = k; PREF.foSel = k;
+        store("mm_prefs", Object.assign({}, store("mm_prefs") || {}, { foSel: k }));
+        render(); if (!state.live.opt[k]) loadOpt(k);
+      };
+    });
+    var es = root.querySelector("#expSel");
+    if (es) es.onchange = function () { loadOpt(state.live.sel, es.value); };
+    root.querySelectorAll("[data-metal-news]").forEach(function (el) {
+      el.onclick = function () { var mn = (state.data.news || []).filter(function (n) { return n.metal; }); openSheet(t("metalNews"), mn.slice(0, 60).map(function (n) { return newsCard(n); }).join("")); };
+    });
     root.querySelectorAll("[data-jump]").forEach(function (el) { el.onclick = function () { var x = $(el.getAttribute("data-jump")); if (x) x.scrollIntoView({ behavior: "smooth", block: "start" }); }; });
     root.querySelectorAll("[data-tab-go]").forEach(function (el) { el.onclick = function () { closeSheet(); setTab(el.getAttribute("data-tab-go")); }; });
   }
@@ -559,10 +703,30 @@
     document.querySelectorAll(".tabs button").forEach(function (b) { b.classList.toggle("active", b.getAttribute("data-tab") === tb); });
     window.scrollTo(0, 0);
     render();
+    if (tb === "fo" && LIVE.available && !state.live.opt[state.live.sel] && !state.live.optLoading[state.live.sel]) loadOpt(state.live.sel);
   }
 
   document.querySelectorAll(".tabs button").forEach(function (b) { b.onclick = function () { setTab(b.getAttribute("data-tab")); }; });
-  $("btnRefresh").onclick = function () { load(true); };
+  function refreshLive(withOpt) {
+    if (!LIVE.available) return;
+    LIVE.indices().then(function (r) {
+      if (Object.keys(r.quotes).length) { state.live.idx = r.quotes; state.live.idxTime = r.time; }
+      state.live.idxErr = r.errors;
+      if (state.tab === "home" || state.tab === "fo") render();
+    }, function () {});
+    if (withOpt || state.tab === "fo") loadOpt(state.live.sel);
+  }
+  function marketHours() {
+    var d = new Date(Date.now() + 5.5 * 3600000), m = d.getUTCHours() * 60 + d.getUTCMinutes();
+    return d.getUTCDay() >= 1 && d.getUTCDay() <= 5 && m >= 9 * 60 && m <= 15 * 60 + 40;
+  }
+  var lastLive = 0;
+  setInterval(function () {
+    if (document.hidden) return;
+    var gap = marketHours() ? 5 * 60000 : 30 * 60000;
+    if (Date.now() - lastLive >= gap) { lastLive = Date.now(); refreshLive(false); }
+  }, 30000);
+  $("btnRefresh").onclick = function () { load(true); lastLive = Date.now(); refreshLive(true); };
   $("btnInfo").onclick = openInfo;
   $("sheetClose").onclick = closeSheet;
   $("sheet").onclick = function (e) { if (e.target.id === "sheet") closeSheet(); };
@@ -574,6 +738,7 @@
   };
   window.mmResume = function () {
     if (Date.now() - state.lastFetch > 5 * 60000) load(false);
+    if (Date.now() - lastLive > 3 * 60000) { lastLive = Date.now(); refreshLive(false); }
     if (state.data) $("updated").textContent = t("updated") + ": " + ago(state.data.generated_at);
   };
   window.mmOpen = function (target) { // from a notification tap: "stock:SYM" or "tab:fo"
@@ -590,4 +755,6 @@
   load(false);
   checkUpdate();
   syncNative();
+  lastLive = Date.now();
+  refreshLive(false);
 })();
