@@ -777,11 +777,34 @@ def label_for(score):
     return "neutral"
 
 
-def rule_outlook(news, markets):
+def india_score(markets):
+    """Actual move of the Indian market today (Nifty, Bank Nifty, Sensex) — the main thing we judge."""
+    vals = []
+    for q in markets.get("india", []):
+        if q["name"] in ("Nifty 50", "Bank Nifty", "Sensex") and q.get("pct") is not None and not q.get("stale"):
+            vals.append(q["pct"] * (1.5 if q["name"] == "Nifty 50" else 1.0))
+    if not vals:
+        return None
+    return math.tanh((sum(vals) / (len(vals) + 0.5 * any(True for _ in vals))) / 0.6)
+
+
+def rule_outlook(news, markets, phase="closed"):
     gs, reasons = global_score(markets)
     ns, pos, neg, n = news_score(news)
     g_norm = math.tanh(gs / 0.7)
-    combined = 0.6 * g_norm + 0.4 * ns
+    ind = india_score(markets)
+    if ind is None:
+        combined = 0.6 * g_norm + 0.4 * ns
+    elif phase == "live":     # market open: judge mainly by what Indian market is actually doing
+        combined = 0.65 * ind + 0.15 * g_norm + 0.2 * ns
+    else:                     # forecasting the next session: global cues matter more, today's trend still counts
+        combined = 0.3 * ind + 0.45 * g_norm + 0.25 * ns
+    if ind is not None:
+        nifty = next((q for q in markets.get("india", []) if q["name"] == "Nifty 50" and not q.get("stale")), None)
+        if nifty and nifty.get("pct") is not None:
+            p = nifty["pct"]
+            reasons.insert(0, ("pos" if p > 0.1 else "neg" if p < -0.1 else "neu",
+                               f"ભારતીય બજાર: Nifty આજે {fmt_pct(p)}", f"Indian market: Nifty today {fmt_pct(p)}"))
     if n:
         pct_pos = round(pos / n * 100)
         reasons.append(("pos" if ns > 0.05 else "neg" if ns < -0.05 else "neu",
@@ -796,6 +819,7 @@ def rule_outlook(news, markets):
         "confidence": conf,
         "global_score": round(g_norm, 3),
         "news_score": round(ns, 3),
+        "india_score": round(ind, 3) if ind is not None else None,
         "reasons": [{"type": t, "text": gu, "gu": gu, "en": en} for t, gu, en in reasons],
     }
 
@@ -864,6 +888,8 @@ Index options data (NSE, nearest expiry):
 Headlines (index | IST time | region | source | title):
 {headlines}
 
+IMPORTANT: "outlook.label" describes ONLY the Indian market (Nifty/Sensex). If the market is OPEN, base it mainly on
+how Nifty/Sensex/Bank Nifty are actually moving today (see snapshot); global cues are secondary.
 Return ONLY JSON with exactly this shape. Every *_gu field in simple Gujarati, every *_en field in simple English.
 {{
   "summary_gu": "4-6 short sentences", "summary_en": "same in English",
@@ -1238,6 +1264,11 @@ def main():
                         **({"error": tr.get("error", "")} if tr["fail"] else {})})
     markets, mkt_status = collect_markets(sources, prev.get("markets"))
     fii = collect_fii_dii() or prev.get("fii_dii")
+    fii_hist = dict(prev.get("fii_hist") or {})
+    for row in fii or []:
+        if row.get("date"):
+            fii_hist.setdefault(row["date"], {})[row.get("category") or "?"] = row
+    fii_hist = dict(sorted(fii_hist.items(), key=lambda kv: datetime.strptime(kv[0], "%d-%b-%Y") if re.match(r"\d{2}-[A-Za-z]{3}-\d{4}$", kv[0]) else datetime.min)[-30:])
     options, opt_status = collect_options()
     metals_india = collect_metals_india() or prev.get("metals_india") or []
     if not options and prev.get("options"):
@@ -1246,7 +1277,7 @@ def main():
             o["stale"] = True
 
     ai, ai_status = run_ai(news, markets, prev, session, phase, now_ist, options)
-    outlook = rule_outlook(news, markets)  # after AI so it can use ai_impact
+    outlook = rule_outlook(news, markets, phase)  # after AI so it can use ai_impact
     final_label = ((ai or {}).get("outlook") or {}).get("label") or outlook["label"]
     ai_fo = (ai or {}).get("fo") or {}
     for key, o in options.items():
@@ -1262,6 +1293,7 @@ def main():
         "ai_status": ai_status,
         "markets": markets,
         "fii_dii": fii,
+        "fii_hist": fii_hist,
         "sectors": sector_view(news, markets),
         "stocks": stock_summary(news, stocks_cfg),
         "stock_list": [[s[0], s[1], s[2]] for s in stocks_cfg["stocks"]],

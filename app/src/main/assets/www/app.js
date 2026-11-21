@@ -25,7 +25,7 @@
   var T = {
     gu: {
       loading: "લોડ થઈ રહ્યું છે…", updated: "અપડેટ", now: "હમણાં", minAgo: " મિનિટ પહેલાં", hrAgo: " કલાક પહેલાં", dayAgo: " દિવસ પહેલાં",
-      tabs: ["હોમ", "સમાચાર", "શેર", "F&O", "વધુ"],
+      tabs: ["હોમ", "શેર", "F&O", "વધુ"],
       liveAt: "લાઇવ", ghAt: "GitHub અપડેટ", dataTime: "ડેટા સમય", srcLive: "લાઇવ (ફોન → ", srcGh: "GitHub (દર 10–20 મિનિટે)",
       loadingOpt: "ઓપ્શન ચેઇન લોડ થઈ રહી છે…", optErr: "લાઇવ ડેટા ન મળ્યો", showingGh: "GitHub નો છેલ્લો ડેટા બતાવું છું.",
       expiryL: "એક્સપાયરી પસંદ કરો", atmCard: "🎯 ATM પ્રીમિયમ (આ એક્સપાયરી માટે)", straddle: "સ્ટ્રેડલ (CE+PE)", expMove: "અપેક્ષિત મૂવ (એક્સપાયરી સુધી) ±",
@@ -43,6 +43,11 @@
       zoneNote: "પ્રીમિયમ ખરીદી ઝોનથી ઉપર જતું રહે તો પાછળ દોડીને ન લેવું.", waitNote: function (n, i) { return n + " " + (i.trigger_up || "—") + " ઉપર ટકે તો CALL, " + (i.trigger_down || "—") + " નીચે તૂટે તો PUT પર નજર રાખો."; },
       sigT: "સંકેતો", sigN: { outlook: "આઉટલુક", pcr: "PCR", maxpain: "મેક્સ પેઇન", oi: "OI ફેરફાર (ATM ±3)", momentum: "આજની ચાલ" },
       newsAi: "📰 સમાચાર/AI", segGlobal: "🌍 ગ્લોબલ", segSectors: "📊 સેક્ટર", ruleTrend: "નિયમ આધારિત",
+      fiiNote: "NSE આજનો FII/DII ડેટા બજાર બંધ થયા પછી (સાંજે આશરે 6–7 વાગ્યે) જાહેર કરે છે. બજાર ચાલુ હોય ત્યારે ચાલુ દિવસનો ડેટા ક્યાંય ઉપલબ્ધ હોતો નથી.",
+      fiiToday: "આજનો", fiiPending: "આજનો ડેટા હજુ જાહેર થયો નથી — છેલ્લો ઉપલબ્ધ દિવસ બતાવું છું.", fiiUpd: "ચેક કર્યું",
+      indiaToday: "આજનું ભારતીય બજાર (લાઇવ)", forecastNext: "આગાહી (AI/નિયમ)", niftyClose: "આજે Nifty",
+      inrApprox: "ભારતમાં અંદાજિત ભાવ (6% ડ્યૂટી સહિત, GST વગર)", per10g: "/10 ગ્રામ", perKg: "/કિલો", liveRule: "લાઇવ ડેટા પરથી",
+      segNews: "📰 સમાચાર",
       metalNews: "ગોલ્ડ/સિલ્વર સમાચાર", allMetalNews: "બધા ગોલ્ડ/સિલ્વર સમાચાર →", sectorsT: "📊 સેક્ટર",
       setupErr: "એપ સેટઅપ અધૂરું છે: રિપોઝિટરીનું નામ મળ્યું નથી. GitHub Actions થી બનેલું APK જ ઇન્સ્ટોલ કરો.",
       noData: "હજુ ડેટા તૈયાર નથી. GitHub માં ‘Collect market data’ workflow એક વાર ચાલવા દો, પછી ⟳ દબાવો.",
@@ -96,7 +101,7 @@
     },
     en: {
       loading: "Loading…", updated: "Updated", now: "just now", minAgo: " min ago", hrAgo: " h ago", dayAgo: " d ago",
-      tabs: ["Home", "News", "Stocks", "F&O", "More"],
+      tabs: ["Home", "Stocks", "F&O", "More"],
       liveAt: "Live", ghAt: "GitHub update", dataTime: "Data time", srcLive: "Live (phone → ", srcGh: "GitHub (every 10–20 min)",
       loadingOpt: "Loading option chain…", optErr: "Live data not available", showingGh: "Showing the last GitHub data.",
       expiryL: "Choose expiry", atmCard: "🎯 ATM premium (this expiry)", straddle: "Straddle (CE+PE)", expMove: "Expected move till expiry ±",
@@ -114,6 +119,11 @@
       zoneNote: "If the premium runs above the buy zone, don't chase it.", waitNote: function (n, i) { return "Watch CALL if " + n + " holds above " + (i.trigger_up || "—") + ", PUT if it breaks below " + (i.trigger_down || "—") + "."; },
       sigT: "Signals", sigN: { outlook: "Outlook", pcr: "PCR", maxpain: "Max pain", oi: "OI change (ATM ±3)", momentum: "Today's move" },
       newsAi: "📰 News/AI", segGlobal: "🌍 Global", segSectors: "📊 Sectors", ruleTrend: "rule based",
+      fiiNote: "NSE publishes today's FII/DII data after market close (around 6–7 PM). Same-day figures are not available anywhere while the market is open.",
+      fiiToday: "Today", fiiPending: "Today's data not published yet — showing the latest available day.", fiiUpd: "Checked",
+      indiaToday: "Indian market today (live)", forecastNext: "Forecast (AI/rule)", niftyClose: "Nifty today",
+      inrApprox: "Approx. India price (incl. 6% duty, excl. GST)", per10g: "/10 g", perKg: "/kg", liveRule: "from live data",
+      segNews: "📰 News",
       metalNews: "Gold/Silver news", allMetalNews: "All gold/silver news →", sectorsT: "📊 Sectors",
       setupErr: "Setup incomplete: repository name missing. Install the APK built by GitHub Actions.",
       noData: "No data yet. Let the ‘Collect market data’ workflow run once on GitHub, then tap ⟳.",
@@ -289,26 +299,43 @@
     $("updated").textContent = d ? (state.live.idxTime ? "🟢 " + t("liveAt") + " " + fmtDT(state.live.idxTime).split(", ")[1] + " · " + t("newsAi") + " " + ago(d.generated_at) : t("updated") + ": " + ago(d.generated_at)) : t("loading");
     var v = $("view");
     if (!d) { v.innerHTML = "<div class='empty'>" + t("loading") + "</div>"; return; }
-    v.innerHTML = ({ home: renderHome, news: renderNews, stocks: renderStocks, fo: renderFO, more: renderMore }[state.tab] || renderHome)(d);
+    v.innerHTML = ({ home: renderHome, stocks: renderStocks, fo: renderFO, more: renderMore }[state.tab] || renderHome)(d);
     bindView();
   }
 
+  function liveIndia() {
+    var lv = state.live.idx || {}, v = [], w = 0, sum = 0;
+    [["Nifty 50", 1.5], ["Bank Nifty", 1], ["Sensex", 1]].forEach(function (x) { var q = lv[x[0]]; if (q && q.pct != null) { sum += q.pct * x[1]; w += x[1]; v.push(q); } });
+    return w ? sum / w : null;
+  }
+  function labelFromPct(p) { return p >= 0.8 ? "strong_positive" : p >= 0.2 ? "positive" : p <= -0.8 ? "strong_negative" : p <= -0.2 ? "negative" : "neutral"; }
   function moodCard(d) {
     var ai = d.ai && d.ai.outlook ? d.ai.outlook : null;
     var rule = d.outlook || {};
     var labels = t("labels");
-    var label = (ai && labels[ai.label]) ? ai.label : (rule.label || "neutral");
-    var c = label.indexOf("positive") >= 0 ? "pos" : label.indexOf("negative") >= 0 ? "neg" : "neu";
-    var conf = ai ? ai.confidence : rule.confidence;
+    var fLabel = (ai && labels[ai.label]) ? ai.label : (rule.label || "neutral");
     var s = d.session || {};
+    var lp = liveIndia(), nifty = (state.live.idx || {})["Nifty 50"];
+    var h = "";
+    if (lp != null && marketHours()) {     // market open: show what the Indian market is actually doing
+      var lab = labelFromPct(lp), c = lab.indexOf("positive") >= 0 ? "pos" : lab.indexOf("negative") >= 0 ? "neg" : "neu";
+      var pos = Math.max(2, Math.min(98, 50 + lp * 30));
+      h += "<div class='mood " + c + "'><div class='when'>" + t("indiaToday") + " — " + dayName(todayIST()) + " · " + fmtDT(state.live.idxTime).split(", ")[1] + "</div>" +
+        "<div class='big " + c + "-t'>" + labels[lab] + "</div><div class='meter'><i style='left:" + pos + "%'></i></div>" +
+        (nifty ? "<span class='badge " + cls(nifty.pct) + "'>Nifty " + pct(nifty.pct) + "</span>" : "") +
+        "<span class='badge'>" + t("forecastNext") + ": " + labels[fLabel] + "</span></div>";
+      return h;
+    }
+    var c2 = fLabel.indexOf("positive") >= 0 ? "pos" : fLabel.indexOf("negative") >= 0 ? "neg" : "neu";
+    var conf = ai ? ai.confidence : rule.confidence;
     var when = t(s.phase === "live" ? "live" : s.phase === "pre" ? "pre" : "closed") + " — " + dayName(s.date);
-    var pos = rule.score != null ? Math.max(2, Math.min(98, (rule.score + 1) * 50)) : 50;
-    var h = "<div class='mood " + c + "'><div class='when'>" + esc(when) + "</div>" +
-      "<div class='big " + c + "-t'>" + labels[label] + "</div>" +
-      "<div class='meter'><i style='left:" + pos + "%'></i></div>" +
+    var pos2 = rule.score != null ? Math.max(2, Math.min(98, (rule.score + 1) * 50)) : 50;
+    h = "<div class='mood " + c2 + "'><div class='when'>" + esc(when) + "</div>" +
+      "<div class='big " + c2 + "-t'>" + labels[fLabel] + "</div>" +
+      "<div class='meter'><i style='left:" + pos2 + "%'></i></div>" +
       "<span class='badge'>" + t("confL") + ": " + (t("conf")[conf] || t("conf").low) + "</span>" +
-      (ai ? "<span class='badge pos'>" + t("aiBadge") + "</span>" : "<span class='badge'>" + t("ruleBadge") + "</span>");
-    if (ai && rule.label && rule.label !== ai.label) h += "<span class='badge'>" + t("ruleSays") + ": " + labels[rule.label] + "</span>";
+      (ai ? "<span class='badge pos'>" + t("aiBadge") + "</span>" : "<span class='badge'>" + t("ruleBadge") + "</span>") +
+      (nifty && nifty.pct != null ? "<span class='badge " + cls(nifty.pct) + "'>" + t("niftyClose") + " " + pct(nifty.pct) + "</span>" : "");
     return h + "</div>";
   }
 
@@ -324,12 +351,7 @@
     (d.outlook && d.outlook.reasons || []).forEach(function (r) { reasons.push({ type: r.type, text: r[state.lang] || r.text }); });
     if (reasons.length) h += "<div class='card'><h3>" + t("reasons") + "</h3><ul class='reasons'>" + reasons.map(function (r) { return "<li class='" + esc(r.type) + "'>" + esc(r.text) + "</li>"; }).join("") + "</ul></div>";
     h += foMini(d);
-    if (d.fii_dii && d.fii_dii.length) {
-      h += "<div class='card'><h3>" + t("fii") + "</h3>" + d.fii_dii.map(function (r) {
-        var n = parseFloat(r.net);
-        return "<div class='row'><div class='l'><b>" + esc(r.category) + "</b><div class='muted small'>" + esc(r.date) + "</div></div><div class='r " + cls(n) + "-t'><b>" + (n > 0 ? "+" : "") + esc(r.net) + "</b><div class='muted small'>" + t("buy") + " " + esc(r.buy) + " · " + t("sell") + " " + esc(r.sell) + "</div></div></div>";
-      }).join("") + "</div>";
-    }
+    h += fiiCard(d);
     h += metalsCard(d);
     if (ai && ai.watch && ai.watch.length) {
       h += "<div class='card'><h3>" + t("focus") + "</h3>" + ai.watch.map(function (w) {
@@ -369,17 +391,57 @@
       "<span class='muted small'>PCR " + o.pcr + " · " + t("support").split(" ")[0] + " " + (o.support || "—") + " · " + t("resistance").split(" ")[0] + " " + (o.resistance || "—") + "</span></div><div class='r'>›</div></div></div>";
   }
 
+  function fiiHistory(d) {
+    var hist = Object.assign({}, d.fii_hist || {}, store("mm_fii_hist") || {});
+    [].concat(d.fii_dii || [], state.live.fii || []).forEach(function (r) { if (r.date) { hist[r.date] = hist[r.date] || {}; hist[r.date][r.category] = r; } });
+    return hist;
+  }
+  function parseNseDate(x) { var p = String(x).split("-"); var m = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].indexOf(p[1]); return m < 0 ? 0 : Date.UTC(+p[2], m, +p[0]); }
+  function fiiCard(d) {
+    var hist = fiiHistory(d);
+    var dates = Object.keys(hist).sort(function (a, b) { return parseNseDate(b) - parseNseDate(a); }).slice(0, 10);
+    if (!dates.length) return "";
+    var sel = state.fiiSel && hist[state.fiiSel] ? state.fiiSel : dates[0];
+    var todayStr = (function () { var x = new Date(Date.now() + 5.5 * 3600000); return x.getUTCDate() + "-" + ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][x.getUTCMonth()] + "-" + x.getUTCFullYear(); })();
+    var latestIsToday = parseNseDate(dates[0]) === parseNseDate(todayStr);
+    var h = "<div class='card'><h3>" + t("fii") + "</h3>";
+    h += "<div class='chips'>" + dates.map(function (dt) {
+      return "<button class='chip " + (dt === sel ? "on" : "") + "' data-fii='" + esc(dt) + "'>" + (parseNseDate(dt) === parseNseDate(todayStr) ? t("fiiToday") + " " : "") + esc(dt.slice(0, 6)) + "</button>";
+    }).join("") + "</div>";
+    var rows = hist[sel] || {};
+    h += Object.keys(rows).map(function (k) {
+      var r = rows[k], n = parseFloat(String(r.net).replace(/,/g, ""));
+      return "<div class='row'><div class='l'><b>" + esc(r.category) + "</b><div class='muted small'>" + esc(r.date) + "</div></div><div class='r " + cls(n) + "-t'><b>" + (n > 0 ? "+" : "") + esc(r.net) + "</b><div class='muted small'>" + t("buy") + " " + esc(r.buy) + " · " + t("sell") + " " + esc(r.sell) + "</div></div></div>";
+    }).join("");
+    if (!latestIsToday) h += "<div class='muted small' style='margin-top:6px'>ℹ️ " + t("fiiPending") + "</div>";
+    h += "<div class='muted small' style='margin-top:4px'>" + t("fiiNote") + (state.live.fiiTime ? " · " + t("fiiUpd") + ": " + fmtDT(state.live.fiiTime).split(", ")[1] : "") + "</div>";
+    return h + "</div>";
+  }
+
   function metalQ(d, name) {
     var lv = state.live.idx || {};
     if (lv[name]) return lv[name];
     var all = [].concat((d.markets && d.markets.macro) || [], (d.metals_india) || []);
     return all.filter(function (q) { return q.name === name || q.sym === name; })[0] || null;
   }
+  function liveMetalsRule() {
+    var lv = state.live.idx || {};
+    if (!lv.Gold && !lv.Silver) return null;
+    var dxy = (lv["Dollar Index"] || {}).pct || 0, y = (lv["US 10Y Yield"] || {}).pct || 0, out = {};
+    [["gold", "Gold"], ["silver", "Silver"]].forEach(function (x) {
+      var own = (lv[x[1]] || {}).pct || 0, sc = -dxy - 0.15 * y + 0.5 * own;
+      out[x[0]] = { trend: sc > 0.25 ? "up" : sc < -0.25 ? "down" : "sideways",
+        outlook_gu: "ડોલર ઇન્ડેક્સ " + pct(dxy) + ", US યીલ્ડ " + pct(y) + ", આજે " + pct(own) + " (" + t("liveRule") + ")",
+        outlook_en: "Dollar index " + pct(dxy) + ", US yield " + pct(y) + ", today " + pct(own) + " (" + t("liveRule") + ")" };
+    });
+    return out;
+  }
   function metalsCard(d) {
     var rows = [["Gold", t("gold"), "gold"], ["Silver", t("silver"), "silver"]];
     var etf = [["GOLDBEES", t("goldbees")], ["SILVERBEES", t("silverbees")]];
-    var aim = (d.ai && d.ai.metals) || d.metals_rule || {};
+    var aim = (d.ai && d.ai.metals) || d.metals_rule || liveMetalsRule() || {};
     var aiMet = !!(d.ai && d.ai.metals);
+    var inr = metalQ(d, "USD/INR");
     var any = false;
     var h = "<div class='card'><h3>" + t("metals") + "</h3>";
     rows.forEach(function (r) {
@@ -389,8 +451,11 @@
       var c = tr === "up" ? "pos" : tr === "down" ? "neg" : "neu";
       h += "<div class='row'><div class='l'><b>" + r[1] + "</b><div class='small'><span class='badge " + c + "'>" + t("trend")[tr] + "</span> <span class='muted'>" + (a ? t("trendNext") + (aiMet ? "" : " (" + t("ruleTrend") + ")") : t("todayTrend")) + "</span></div>" +
         (a && tx(a, "outlook") ? "<div class='muted small'>" + (aiMet ? "🤖 " : "📐 ") + esc(tx(a, "outlook")) + "</div>" : "") +
-        "</div><div class='r'><div>" + num(q.price) + "</div><div class='" + cls(q.pct || 0) + "-t'><b>" + pct(q.pct) + "</b></div></div></div>";
+        "</div><div class='r'><div>$" + num(q.price) + "</div><div class='" + cls(q.pct || 0) + "-t'><b>" + pct(q.pct) + "</b></div>" +
+        (inr && inr.price ? "<div class='muted small'>≈ ₹" + num(Math.round(q.price * inr.price / 31.1035 * (r[0] === "Gold" ? 10 : 1000) * 1.06)) + (r[0] === "Gold" ? t("per10g") : t("perKg")) + "</div>" : "") +
+        "</div></div>";
     });
+    if (inr && inr.price) h += "<div class='muted small'>₹ = " + t("inrApprox") + " · USD/INR " + num(inr.price) + "</div>";
     etf.forEach(function (r) {
       var q = metalQ(d, r[0]); if (!q) return; any = true;
       h += "<div class='row'><div class='l small'>" + r[1] + "</div><div class='r'><span>₹" + num(q.price) + "</span> <b class='" + cls(q.pct || 0) + "-t'>" + pct(q.pct) + "</b></div></div>";
@@ -455,10 +520,10 @@
   }
 
   function renderMore(d) {
-    var seg = state.moreSeg || "global";
-    return "<div class='seg'><button data-seg='global' class='" + (seg === "global" ? "on" : "") + "'>" + t("segGlobal") + "</button>" +
-      "<button data-seg='sectors' class='" + (seg === "sectors" ? "on" : "") + "'>" + t("segSectors") + "</button></div>" +
-      (seg === "global" ? renderGlobal(d) : renderSectors(d));
+    var seg = state.moreSeg || "news";
+    return "<div class='seg'>" + [["news", t("segNews")], ["global", t("segGlobal")], ["sectors", t("segSectors")]].map(function (x) {
+      return "<button data-seg='" + x[0] + "' class='" + (seg === x[0] ? "on" : "") + "'>" + x[1] + "</button>";
+    }).join("") + "</div>" + (seg === "news" ? renderNews(d) : seg === "global" ? renderGlobal(d) : renderSectors(d));
   }
   function renderGlobal(d) {
     var m = d.markets || {}, h = "";
@@ -730,6 +795,7 @@
     root.querySelectorAll("[data-metal-news]").forEach(function (el) {
       el.onclick = function () { var mn = (state.data.news || []).filter(function (n) { return n.metal; }); openSheet(t("metalNews"), mn.slice(0, 60).map(function (n) { return newsCard(n); }).join("")); };
     });
+    root.querySelectorAll("[data-fii]").forEach(function (el) { el.onclick = function () { state.fiiSel = el.getAttribute("data-fii"); render(); }; });
     root.querySelectorAll("[data-seg]").forEach(function (el) { el.onclick = function () { state.moreSeg = el.getAttribute("data-seg"); render(); }; });
     root.querySelectorAll("[data-jump]").forEach(function (el) { el.onclick = function () { var x = $(el.getAttribute("data-jump")); if (x) x.scrollIntoView({ behavior: "smooth", block: "start" }); }; });
     root.querySelectorAll("[data-tab-go]").forEach(function (el) { el.onclick = function () { closeSheet(); setTab(el.getAttribute("data-tab-go")); }; });
@@ -744,6 +810,8 @@
   }
   function debounce(fn, ms) { var tm; return function () { clearTimeout(tm); tm = setTimeout(fn, ms); }; }
   function setTab(tb) {
+    if (tb === "news") { state.moreSeg = "news"; tb = "more"; }
+    if (tb === "global" || tb === "sectors") { state.moreSeg = tb; tb = "more"; }
     state.tab = tb;
     document.querySelectorAll(".tabs button").forEach(function (b) { b.classList.toggle("active", b.getAttribute("data-tab") === tb); });
     window.scrollTo(0, 0);
@@ -760,6 +828,16 @@
       if (state.tab === "home" || state.tab === "fo") render();
     }, function () {});
     if (withOpt || state.tab === "fo") loadOpt(state.live.sel);
+    LIVE.fii().then(function (rows) {
+      if (!rows.length) return;
+      state.live.fii = rows; state.live.fiiTime = new Date().toISOString();
+      var h = store("mm_fii_hist") || {};
+      rows.forEach(function (r) { if (r.date) { h[r.date] = h[r.date] || {}; h[r.date][r.category] = r; } });
+      var keys = Object.keys(h).sort(function (a, b) { return parseNseDate(b) - parseNseDate(a); });
+      keys.slice(30).forEach(function (k) { delete h[k]; });
+      store("mm_fii_hist", h);
+      if (state.tab === "home") render();
+    }, function () {});
   }
   function marketHours() {
     var d = new Date(Date.now() + 5.5 * 3600000), m = d.getUTCHours() * 60 + d.getUTCMinutes();

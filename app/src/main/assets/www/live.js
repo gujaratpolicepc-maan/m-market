@@ -76,7 +76,7 @@
     "Nifty Smallcap 100": "NIFTY SMALLCAP 100", "India VIX": "INDIA VIX"
   };
   var CNBC_SYM = { "Sensex": [".BSESN", ".SENSEX"], "BANKEX": [".BSEBANK", ".BANKEX"], "Gold": ["@GC.1"], "Silver": ["@SI.1"],
-    "Nifty 50": [".NSEI"], "Bank Nifty": [".NSEBANK"] };
+    "Nifty 50": [".NSEI"], "Bank Nifty": [".NSEBANK"], "Dollar Index": [".DXY"], "US 10Y Yield": ["US10Y"], "USD/INR": ["INR="] };
 
   function nseIndices() {
     return njson("https://www.nseindia.com/api/allIndices").then(function (js) {
@@ -142,7 +142,7 @@
       safe(nseIndices(), "NSE"),
       safe(bseIndices(), "BSE")
     ]).then(function () {
-      var miss = ["Sensex", "BANKEX", "Gold", "Silver", "Nifty 50", "Bank Nifty"].filter(function (n) { return !out[n]; });
+      var miss = ["Sensex", "BANKEX", "Gold", "Silver", "Nifty 50", "Bank Nifty", "Dollar Index", "US 10Y Yield", "USD/INR"].filter(function (n) { return !out[n]; });
       return safe(cnbcQuotes(miss), "CNBC");
     }).then(function () {
       return Promise.all([
@@ -358,9 +358,19 @@
     });
   }
 
+  /** today's provisional FII/DII cash numbers from NSE (published after market close) */
+  function fii() {
+    return njson("https://www.nseindia.com/api/fiidiiTradeReact").then(function (js) {
+      return (Array.isArray(js) ? js : []).map(function (r) {
+        return { category: r.category, date: r.date, buy: r.buyValue, sell: r.sellValue, net: r.netValue };
+      });
+    });
+  }
+
   window.MMLive = {
     available: !!(NATIVE && NATIVE.http),
     indices: indices,
+    fii: fii,
     options: options,
     idea: idea,
     OPT: OPT,
