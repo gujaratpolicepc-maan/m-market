@@ -140,7 +140,14 @@
       var stack = [js], row = null;
       while (stack.length && !row) {
         var v = stack.pop();
-        if (Array.isArray(v)) { v.forEach(function (x) { stack.push(x); }); continue; }
+        if (Array.isArray(v)) {
+          // Moneycontrol rows: [symbol, name, price, net_change, %change, high, low, open, prev_close, ...]
+          if (v.length > 8 && v.every(function (x) { return typeof x !== "object"; }) &&
+              v.some(function (x) { return typeof x === "string" && /GIFT|SGX/i.test(x) && /NIFTY/i.test(x); })) {
+            row = { price: v[2], percent_change: v[4], prev_close: v[8] }; break;
+          }
+          v.forEach(function (x) { stack.push(x); }); continue;
+        }
         if (v && typeof v === "object") {
           var txt = Object.keys(v).map(function (k) { return typeof v[k] === "string" ? v[k] : ""; }).join(" ").toUpperCase();
           if ((txt.indexOf("GIFT") >= 0 || txt.indexOf("SGX") >= 0) && txt.indexOf("NIFTY") >= 0) row = v;
@@ -149,8 +156,8 @@
       }
       if (!row) throw new Error("GIFT not in feed");
       var x = q(pick(row, ["lastprice", "ltp", "lastPrice", "price", "current", "last", "close"]),
-        pick(row, ["prevclose", "previousclose", "prev_close", "prevClose", "previousClose"]),
-        pick(row, ["percentchange", "pchange", "chgper", "change_per", "perChange", "percChange", "changePercent"]));
+        pick(row, ["prev_close", "prevclose", "previousclose", "prevClose", "previousClose"]),
+        pick(row, ["percent_change", "percentchange", "pchange", "chgper", "change_per", "perChange", "percChange", "changePercent"]));
       if (!x) throw new Error("GIFT fields: " + Object.keys(row).slice(0, 10).join(","));
       return { "GIFT Nifty": x };
     });

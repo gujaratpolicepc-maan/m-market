@@ -48,6 +48,7 @@
       indiaToday: "આજનું ભારતીય બજાર (લાઇવ)", forecastNext: "આગાહી (AI/નિયમ)", niftyClose: "આજે Nifty",
       inrApprox: "ભારતમાં અંદાજિત ભાવ (6% ડ્યૂટી સહિત, GST વગર)", per10g: "/10 ગ્રામ", perKg: "/કિલો", liveRule: "લાઇવ ડેટા પરથી",
       segNews: "📰 સમાચાર", segLedger: "🎯 હિસાબ",
+      planTime: "પ્લાન આપ્યાનો સમય", planData: "ડેટા", firstSig: "આજનો પહેલો સંકેત", expL: "એક્સપાયરી", daysLeft: function (d) { return d === 0 ? "આજે" : d + " દિવસ બાકી"; },
       probUp: "ઉપર બંધ થવાની સંભાવના", rangeL: "અપેક્ષિત Nifty રેન્જ", giftGap: "GIFT Nifty મુજબ ઓપનિંગ", noClear: "સ્પષ્ટ સંકેત નથી (55% થી ઓછું)",
       gapUp: "ગેપ-અપ", gapDown: "ગેપ-ડાઉન", flat: "સપાટ",
       ledT: "🎯 આગાહીનો હિસાબ (Nifty)", ledNote: "દરેક આગાહી બજાર ખૂલે તે પહેલાં સાચવાય છે અને સાંજે અસલી પરિણામ સાથે સરખાવાય છે.",
@@ -132,6 +133,7 @@
       indiaToday: "Indian market today (live)", forecastNext: "Forecast (AI/rule)", niftyClose: "Nifty today",
       inrApprox: "Approx. India price (incl. 6% duty, excl. GST)", per10g: "/10 g", perKg: "/kg", liveRule: "from live data",
       segNews: "📰 News", segLedger: "🎯 Track record",
+      planTime: "Plan given at", planData: "data", firstSig: "Today's first signal", expL: "Expiry", daysLeft: function (d) { return d === 0 ? "today" : d + " day(s) left"; },
       probUp: "Chance of closing higher", rangeL: "Expected Nifty range", giftGap: "Opening as per GIFT Nifty", noClear: "No clear signal (below 55%)",
       gapUp: "gap-up", gapDown: "gap-down", flat: "flat",
       ledT: "🎯 Forecast track record (Nifty)", ledNote: "Each forecast is saved before the market opens and compared with the real result in the evening.",
@@ -714,7 +716,7 @@
     var i = ideaObj || {}, b = i.bias || "neutral", n = o.name;
     var h = "<div class='card'><h3>" + esc(n) + " · " + t("expiry") + " " + esc(o.expiry || "—") + "</h3>";
     h += "<div class='ts'>🕒 " + t("dataTime") + ": <b>" + meta.time + "</b><br>" + meta.src + "</div>";
-    h += planCard(n, i, o);
+    h += planCard(n, i, o, meta);
     if (o.expiries && o.expiries.length > 1) {
       h += "<label class='muted small'>" + t("expiryL") + ": <select id='expSel'>" + o.expiries.map(function (e) { return "<option" + (e === o.expiry ? " selected" : "") + ">" + esc(e) + "</option>"; }).join("") + "</select></label>";
     }
@@ -775,10 +777,17 @@
     return d.toISOString().slice(0, 10);
   }
 
-  function planCard(n, i, o) {
+  function planCard(n, i, o, meta) {
     var b = i.bias || "neutral", c = b === "bullish" ? "pos" : b === "bearish" ? "neg" : "neu";
     var head = i.action === "BUY_CE" ? t("buyCall") : i.action === "BUY_PE" ? t("buyPut") : t("noTrade");
-    var h = "<div class='plan " + c + "'><div class='plan-t'>" + t("planT") + (i.expiryDay ? " <span class='badge neg'>" + t("expDayBadge") + "</span>" : "") + "</div>" +
+    var given = fmtDT(new Date().toISOString());
+    var stamp = "<div class='plan-ts'>🕒 " + t("planTime") + ": <b>" + given + "</b>" +
+      (meta && meta.time ? " · " + t("planData") + ": " + meta.time : "") +
+      "<br>📅 " + t("expL") + ": <b>" + esc(o.expiry || "—") + "</b>" + (i.dte != null ? " (" + t("daysLeft")(i.dte) + ")" : "");
+    var first = (store("mm_fo_log") || []).filter(function (x) { return x.date === todayIST() && x.name === o.name; })[0];
+    if (first) stamp += "<br>📌 " + t("firstSig") + ": <b>" + first.time + "</b> — " + first.strike + " " + first.opt + " @ ₹" + first.premium;
+    stamp += "</div>";
+    var h = "<div class='plan " + c + "'><div class='plan-t'>" + t("planT") + (i.expiryDay ? " <span class='badge neg'>" + t("expDayBadge") + "</span>" : "") + "</div>" + stamp +
       "<div class='plan-big " + c + "-t'>" + (i.action === "BUY_CE" ? "📈 " : i.action === "BUY_PE" ? "📉 " : "⏸ ") + head + "</div>" +
       "<span class='badge'>" + t("confT") + ": " + t("conf")[i.confidence || "low"] + "</span>";
     if (i.premium) {

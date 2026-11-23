@@ -159,3 +159,4 @@ select{background:var(--card2);color:var(--txt);border:1px solid var(--line);bor
 table.led td{font-size:11.5px;line-height:1.35}
 .seg{flex-wrap:wrap}
 .seg button{min-width:30%;padding:9px 6px;font-size:13px}
+.plan-ts{font-size:12.5px;color:#BFE3FF;background:#12324a;border-radius:8px;padding:6px 9px;margin:4px 0 8px;line-height:1.6}
