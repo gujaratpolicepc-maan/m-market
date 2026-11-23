@@ -399,18 +399,34 @@ def _find_gift(js):
     return None
 
 
+def _names(js, limit=30):
+    out, stack = [], [js]
+    while stack and len(out) < limit:
+        v = stack.pop()
+        if isinstance(v, dict):
+            for k, x in v.items():
+                if isinstance(x, str) and k.lower() in ("name", "indexname", "index_name", "symbol", "shortname", "id", "sc_id"):
+                    out.append(x[:20])
+                elif isinstance(x, (dict, list)):
+                    stack.append(x)
+        elif isinstance(v, list):
+            stack.extend(v)
+    return out
+
+
 def gift_nifty():
     errs = []
     for url in GIFT_URLS:
         try:
             r = HTTP.get(url, timeout=15)
             r.raise_for_status()
-            row = _find_gift(r.json())
+            js = r.json()
+            row = _find_gift(js)
             if not row:
-                errs.append("not in feed")
+                errs.append("feed names: " + "|".join(_names(js)))
                 continue
-            price = _pick(row, ["lastprice", "ltp", "lastPrice", "price", "current", "last", "close"])
-            pct = _pick(row, ["percentchange", "pchange", "chgper", "change_per", "perChange", "percChange", "changePercent"])
+            price = _pick(row, ["lastprice", "ltp", "lastPrice", "price", "current", "last", "close", "lastValue"])
+            pct = _pick(row, ["percentchange", "pchange", "chgper", "change_per", "perChange", "percChange", "changePercent", "chgPer"])
             prev = _pick(row, ["prevclose", "previousclose", "prev_close", "prevClose", "previousClose"])
             if price and not prev and pct is not None:
                 prev = price / (1 + pct / 100)
@@ -420,6 +436,19 @@ def gift_nifty():
             errs.append("fields: " + ",".join(list(row.keys())[:12]))
         except Exception as e:
             errs.append(str(e)[:60])
+    # fallback: Moneycontrol global-indices web page
+    try:
+        r = HTTP.get("https://www.moneycontrol.com/markets/global-indices/", timeout=20)
+        r.raise_for_status()
+        m = re.search(r"GIFT\s*NIFTY.{0,600}?([\d,]{5,}\.\d+).{0,400}?(-?[\d.]+)\s*%", r.text, re.S | re.I)
+        if m:
+            price, pct = _num(m.group(1)), _num(m.group(2))
+            q = _q(price, price / (1 + pct / 100) if pct is not None else None)
+            if q:
+                return q
+        errs.append(f"page: no match (len {len(r.text)})")
+    except Exception as e:
+        errs.append(f"page: {str(e)[:50]}")
     raise RuntimeError("; ".join(errs))
 
 
@@ -599,7 +628,7 @@ def collect_markets(sources, prev_markets=None):
             got["GIFTNIFTY"] = gift_nifty()
             status.append({"name": "GIFT Nifty (Moneycontrol)", "ok": True, "count": 1})
         except Exception as e:
-            status.append({"name": "GIFT Nifty (Moneycontrol)", "ok": False, "error": str(e)[:150]})
+            status.append({"name": "GIFT Nifty (Moneycontrol)", "ok": False, "error": str(e)[:600]})
     # 2) CNBC (works from cloud servers, no key)
     need = sorted({m["sym"] for _, m in all_items if m["sym"] not in got})
     if need:
