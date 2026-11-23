@@ -148,6 +148,11 @@
  "markets": {
   "india": [
    {
+    "sym": "GIFTNIFTY",
+    "name": "GIFT Nifty",
+    "w": 3.0
+   },
+   {
     "sym": "^NSEI",
     "name": "Nifty 50"
    },

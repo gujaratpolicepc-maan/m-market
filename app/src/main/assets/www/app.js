@@ -47,7 +47,15 @@
       fiiToday: "આજનો", fiiPending: "આજનો ડેટા હજુ જાહેર થયો નથી — છેલ્લો ઉપલબ્ધ દિવસ બતાવું છું.", fiiUpd: "ચેક કર્યું",
       indiaToday: "આજનું ભારતીય બજાર (લાઇવ)", forecastNext: "આગાહી (AI/નિયમ)", niftyClose: "આજે Nifty",
       inrApprox: "ભારતમાં અંદાજિત ભાવ (6% ડ્યૂટી સહિત, GST વગર)", per10g: "/10 ગ્રામ", perKg: "/કિલો", liveRule: "લાઇવ ડેટા પરથી",
-      segNews: "📰 સમાચાર",
+      segNews: "📰 સમાચાર", segLedger: "🎯 હિસાબ",
+      probUp: "ઉપર બંધ થવાની સંભાવના", rangeL: "અપેક્ષિત Nifty રેન્જ", giftGap: "GIFT Nifty મુજબ ઓપનિંગ", noClear: "સ્પષ્ટ સંકેત નથી (55% થી ઓછું)",
+      gapUp: "ગેપ-અપ", gapDown: "ગેપ-ડાઉન", flat: "સપાટ",
+      ledT: "🎯 આગાહીનો હિસાબ (Nifty)", ledNote: "દરેક આગાહી બજાર ખૂલે તે પહેલાં સાચવાય છે અને સાંજે અસલી પરિણામ સાથે સરખાવાય છે.",
+      ledCols: ["તારીખ", "આગાહી", "ગેપ (અંદાજ/અસલી)", "રેન્જ", "બંધ", "પરિણામ"],
+      statDir: "દિશા સાચી", statDirCalled: "જ્યારે સ્પષ્ટ દિશા કહી", statGap: "ઓપનિંગ ગેપ સાચો", statRange: "બંધ રેન્જમાં", statBase: "સરખામણી: ‘હંમેશા ઉપર’ કહેનારી સાદી સિસ્ટમ",
+      last20: "છેલ્લા 20 દિવસ", allT: "કુલ", noLedger: "હજુ હિસાબ શરૂ થયો છે — પહેલું પરિણામ આજે સાંજે 3:35 પછી દેખાશે.",
+      foLog: "📋 F&O પ્લાનનો હિસાબ (આ ફોન પર)", foLogNote: "દરરોજ દરેક ઇન્ડેક્સનો પહેલો CALL/PUT સંકેત સચવાય છે અને બજાર બંધ થયા પછી તપાસાય છે.", foLogEmpty: "હજુ કોઈ F&O સંકેત સચવાયો નથી.",
+      pending: "બાકી", staleData: "⚠️ સમાચાર/AI ડેટા જૂનો",
       metalNews: "ગોલ્ડ/સિલ્વર સમાચાર", allMetalNews: "બધા ગોલ્ડ/સિલ્વર સમાચાર →", sectorsT: "📊 સેક્ટર",
       setupErr: "એપ સેટઅપ અધૂરું છે: રિપોઝિટરીનું નામ મળ્યું નથી. GitHub Actions થી બનેલું APK જ ઇન્સ્ટોલ કરો.",
       noData: "હજુ ડેટા તૈયાર નથી. GitHub માં ‘Collect market data’ workflow એક વાર ચાલવા દો, પછી ⟳ દબાવો.",
@@ -123,7 +131,15 @@
       fiiToday: "Today", fiiPending: "Today's data not published yet — showing the latest available day.", fiiUpd: "Checked",
       indiaToday: "Indian market today (live)", forecastNext: "Forecast (AI/rule)", niftyClose: "Nifty today",
       inrApprox: "Approx. India price (incl. 6% duty, excl. GST)", per10g: "/10 g", perKg: "/kg", liveRule: "from live data",
-      segNews: "📰 News",
+      segNews: "📰 News", segLedger: "🎯 Track record",
+      probUp: "Chance of closing higher", rangeL: "Expected Nifty range", giftGap: "Opening as per GIFT Nifty", noClear: "No clear signal (below 55%)",
+      gapUp: "gap-up", gapDown: "gap-down", flat: "flat",
+      ledT: "🎯 Forecast track record (Nifty)", ledNote: "Each forecast is saved before the market opens and compared with the real result in the evening.",
+      ledCols: ["Date", "Forecast", "Gap (pred/real)", "Range", "Close", "Result"],
+      statDir: "Direction right", statDirCalled: "When a clear direction was given", statGap: "Opening gap right", statRange: "Close inside range", statBase: "Baseline: a naive ‘always up’ system",
+      last20: "Last 20 days", allT: "All", noLedger: "Tracking has just started — the first result appears after 3:35 PM today.",
+      foLog: "📋 F&O plan record (this phone)", foLogNote: "The first CALL/PUT signal per index per day is saved and checked after the close.", foLogEmpty: "No F&O signal saved yet.",
+      pending: "pending", staleData: "⚠️ News/AI data is old",
       metalNews: "Gold/Silver news", allMetalNews: "All gold/silver news →", sectorsT: "📊 Sectors",
       setupErr: "Setup incomplete: repository name missing. Install the APK built by GitHub Actions.",
       noData: "No data yet. Let the ‘Collect market data’ workflow run once on GitHub, then tap ⟳.",
@@ -296,7 +312,7 @@
   function render() {
     renderChrome();
     var d = state.data;
-    $("updated").textContent = d ? (state.live.idxTime ? "🟢 " + t("liveAt") + " " + fmtDT(state.live.idxTime).split(", ")[1] + " · " + t("newsAi") + " " + ago(d.generated_at) : t("updated") + ": " + ago(d.generated_at)) : t("loading");
+    if (d) renderHeaderOnly(); else $("updated").textContent = t("loading");
     var v = $("view");
     if (!d) { v.innerHTML = "<div class='empty'>" + t("loading") + "</div>"; return; }
     v.innerHTML = ({ home: renderHome, stocks: renderStocks, fo: renderFO, more: renderMore }[state.tab] || renderHome)(d);
@@ -336,6 +352,22 @@
       "<span class='badge'>" + t("confL") + ": " + (t("conf")[conf] || t("conf").low) + "</span>" +
       (ai ? "<span class='badge pos'>" + t("aiBadge") + "</span>" : "<span class='badge'>" + t("ruleBadge") + "</span>") +
       (nifty && nifty.pct != null ? "<span class='badge " + cls(nifty.pct) + "'>" + t("niftyClose") + " " + pct(nifty.pct) + "</span>" : "");
+    h += forecastBox(d);
+    return h + "</div>";
+  }
+  function liveGap(d) {
+    var e = d.ledger && d.session ? d.ledger[d.session.date] : null, g = (state.live.idx || {})["GIFT Nifty"];
+    if (e && e.gift_ref && g && g.price) return Math.round((g.price / e.gift_ref - 1) * 10000) / 100;
+    return d.forecast ? d.forecast.gap_pred : null;
+  }
+  function forecastBox(d) {
+    var f = d.forecast;
+    if (!f) return "";
+    var p = Math.round((f.prob_up || 0.5) * 100), gap = liveGap(d);
+    var clear = p >= 55 || p <= 45;
+    var h = "<div class='fbox'><div><span class='muted small'>" + t("probUp") + "</span><b class='" + (p >= 55 ? "pos" : p <= 45 ? "neg" : "neu") + "-t'> " + p + "%</b>" + (clear ? "" : " <span class='muted small'>(" + t("noClear") + ")</span>") + "</div>";
+    if (f.range_lo) h += "<div><span class='muted small'>" + t("rangeL") + ":</span> <b>" + num(f.range_lo) + " – " + num(f.range_hi) + "</b></div>";
+    if (gap != null) h += "<div><span class='muted small'>" + t("giftGap") + ":</span> <b class='" + cls(gap / 2) + "-t'>" + pct(gap) + " " + (gap >= 0.15 ? t("gapUp") : gap <= -0.15 ? t("gapDown") : t("flat")) + "</b>" + (f.ref ? " <span class='muted small'>(≈ " + num(Math.round(f.ref * (1 + gap / 100))) + ")</span>" : "") + "</div>";
     return h + "</div>";
   }
 
@@ -368,7 +400,7 @@
   function indexStrip(d) {
     var base = (d.markets && d.markets.india) || [], lv = state.live.idx || {};
     var names = base.map(function (q) { return q.name; });
-    ["Nifty 50", "Sensex", "Bank Nifty", "BANKEX"].forEach(function (n) { if (names.indexOf(n) < 0 && lv[n]) names.push(n); });
+    ["GIFT Nifty", "Nifty 50", "Sensex", "Bank Nifty", "BANKEX"].forEach(function (n) { if (names.indexOf(n) < 0 && lv[n]) { if (n === "GIFT Nifty") names.unshift(n); else names.push(n); } });
     if (!names.length) return "";
     var anyLive = false;
     var cells = names.map(function (n) {
@@ -519,11 +551,56 @@
     return h;
   }
 
+  function statRow(label, o) {
+    if (!o || !o.n) return "";
+    var r = Math.round(o.hit / o.n * 100);
+    return "<div class='row'><div class='l small'>" + label + "</div><div class='r'><b class='" + (r >= 55 ? "pos" : r < 50 ? "neg" : "neu") + "-t'>" + r + "%</b> <span class='muted small'>(" + o.hit + "/" + o.n + ")</span></div></div>";
+  }
+  function renderLedger(d) {
+    var led = d.ledger || {}, st = d.ledger_stats || {};
+    var h = "<div class='card'><h3>" + t("ledT") + "</h3><div class='muted small' style='margin-bottom:8px'>" + t("ledNote") + "</div>";
+    ["last20", "all"].forEach(function (k) {
+      var s = st[k]; if (!s || !s.n) return;
+      h += "<div class='muted small' style='margin-top:6px'><b>" + t(k === "last20" ? "last20" : "allT") + "</b> (" + s.n + ")</div>" +
+        statRow(t("statDir"), s.dir) + statRow(t("statDirCalled"), s.dir_called) + statRow(t("statGap"), s.gap) + statRow(t("statRange"), s.range) + statRow(t("statBase"), s.baseline_up);
+    });
+    var keys = Object.keys(led).sort().reverse().slice(0, 30);
+    var labels = t("labels");
+    if (!keys.some(function (k) { return led[k].actual; })) h += "<div class='muted' style='margin:8px 0'>" + t("noLedger") + "</div>";
+    if (keys.length) {
+      h += "<div class='tbl-wrap'><table class='chain led'><tr>" + t("ledCols").map(function (x) { return "<th>" + x + "</th>"; }).join("") + "</tr>" + keys.map(function (k) {
+        var f = led[k].forecast || {}, a = led[k].actual, hi = (a && a.hits) || {};
+        function ok(v) { return v === true ? "✅" : v === false ? "❌" : "–"; }
+        return "<tr><td>" + k.slice(8) + "/" + k.slice(5, 7) + "</td>" +
+          "<td>" + (f.prob_up != null ? Math.round(f.prob_up * 100) + "%↑" : "–") + "<br><span class='muted'>" + esc((labels[f.label] || "").split(" ")[0]) + "</span></td>" +
+          "<td>" + (f.gap_pred != null ? pct(f.gap_pred) : "–") + "<br>" + (a && a.open_gap != null ? pct(a.open_gap) : "") + "</td>" +
+          "<td>" + (f.range_lo ? f.range_lo + "<br>" + f.range_hi : "–") + "</td>" +
+          "<td>" + (a ? num(a.close) + "<br><span class='" + cls(a.close_pct) + "-t'>" + pct(a.close_pct) + "</span>" : t("pending")) + "</td>" +
+          "<td>" + (a ? "D" + ok(hi.dir) + " G" + ok(hi.gap) + " R" + ok(hi.range) : "⏳") + "</td></tr>";
+      }).join("") + "</table></div><div class='muted small' style='margin-top:6px'>D = દિશા/direction · G = ગેપ/gap · R = રેન્જ/range</div>";
+    }
+    h += "</div>" + foLogCard();
+    return h;
+  }
+  function foLogCard() {
+    var log = store("mm_fo_log") || [];
+    var h = "<div class='card'><h3>" + t("foLog") + "</h3><div class='muted small' style='margin-bottom:6px'>" + t("foLogNote") + "</div>";
+    if (!log.length) return h + "<div class='muted'>" + t("foLogEmpty") + "</div></div>";
+    var done = log.filter(function (x) { return x.close != null; }), hit = done.filter(function (x) { return x.ok; }).length;
+    if (done.length) h += statRow(t("statDir"), { hit: hit, n: done.length });
+    h += log.slice().reverse().slice(0, 25).map(function (x) {
+      return "<div class='row'><div class='l small'><b>" + esc(x.name) + " " + x.strike + " " + x.opt + "</b> · " + x.date.slice(8) + "/" + x.date.slice(5, 7) + " " + x.time +
+        "<div class='muted'>" + t("spot") + " " + num(x.spot) + " · ₹" + x.premium + "</div></div><div class='r small'>" +
+        (x.close != null ? (x.ok ? "✅" : "❌") + " " + num(x.close) : "⏳ " + t("pending")) + "</div></div>";
+    }).join("");
+    return h + "</div>";
+  }
+
   function renderMore(d) {
     var seg = state.moreSeg || "news";
-    return "<div class='seg'>" + [["news", t("segNews")], ["global", t("segGlobal")], ["sectors", t("segSectors")]].map(function (x) {
+    return "<div class='seg'>" + [["news", t("segNews")], ["global", t("segGlobal")], ["sectors", t("segSectors")], ["ledger", t("segLedger")]].map(function (x) {
       return "<button data-seg='" + x[0] + "' class='" + (seg === x[0] ? "on" : "") + "'>" + x[1] + "</button>";
-    }).join("") + "</div>" + (seg === "news" ? renderNews(d) : seg === "global" ? renderGlobal(d) : renderSectors(d));
+    }).join("") + "</div>" + (seg === "news" ? renderNews(d) : seg === "global" ? renderGlobal(d) : seg === "ledger" ? renderLedger(d) : renderSectors(d));
   }
   function renderGlobal(d) {
     var m = d.markets || {}, h = "";
@@ -671,6 +748,33 @@
     return h + "</div>";
   }
 
+  function logFoPlan(key, o, i, idxName) {
+    if (!i || (i.action !== "BUY_CE" && i.action !== "BUY_PE") || !marketHours()) return;
+    var log = store("mm_fo_log") || [], day = todayIST();
+    if (log.some(function (x) { return x.date === day && x.key === key; })) return;
+    var now = new Date(Date.now() + 5.5 * 3600000);
+    log.push({ date: day, key: key, name: o.name, idx: idxName, time: ("0" + now.getUTCHours()).slice(-2) + ":" + ("0" + now.getUTCMinutes()).slice(-2),
+      opt: i.opt, strike: i.strike, premium: i.premium, spot: o.spot, sl: i.sl_premium, t1: i.target_premium });
+    store("mm_fo_log", log.slice(-200));
+  }
+  function evalFoLog() { // fill in the closing level for past signals
+    var log = store("mm_fo_log") || [], lv = state.live.idx || {}, day = todayIST(), changed = false;
+    var after = (function () { var d = new Date(Date.now() + 5.5 * 3600000); return d.getUTCHours() * 60 + d.getUTCMinutes() >= 15 * 60 + 35; })();
+    log.forEach(function (x) {
+      if (x.close != null) return;
+      var q = lv[x.idx]; if (!q || q.price == null) return;
+      var close = null;
+      if (x.date === day && after) close = q.price;
+      else if (x.date < day && q.prev && x.date === prevWeekday(day)) close = q.prev;
+      if (close != null) { x.close = close; x.ok = x.opt === "CE" ? close > x.spot : close < x.spot; changed = true; }
+    });
+    if (changed) store("mm_fo_log", log);
+  }
+  function prevWeekday(day) {
+    var d = new Date(day + "T00:00:00Z"); do { d = new Date(d.getTime() - 86400000); } while (d.getUTCDay() === 0 || d.getUTCDay() === 6);
+    return d.toISOString().slice(0, 10);
+  }
+
   function planCard(n, i, o) {
     var b = i.bias || "neutral", c = b === "bullish" ? "pos" : b === "bearish" ? "neg" : "neu";
     var head = i.action === "BUY_CE" ? t("buyCall") : i.action === "BUY_PE" ? t("buyPut") : t("noTrade");
@@ -712,6 +816,7 @@
       var idxName = { nifty: "Nifty 50", banknifty: "Bank Nifty", finnifty: "Fin Nifty", midcpnifty: "Midcap Select", sensex: "Sensex", bankex: "BANKEX" }[sel];
       var iq = (L.idx || {})[idxName];
       ideaObj = LIVE.idea(lv, finalLabel(d), (aiFo[sel] || {}).bias, { pct: iq ? iq.pct : null });
+      logFoPlan(sel, lv, ideaObj, idxName);
     } else if (gh[sel]) {
       o = gh[sel];
       meta = { time: fmtDT(o.fetched_at || d.generated_at) + (o.stale ? " ⏳" : ""), src: "🕒 " + t("srcGh") };
@@ -823,7 +928,7 @@
   function refreshLive(withOpt) {
     if (!LIVE.available) return;
     LIVE.indices().then(function (r) {
-      if (Object.keys(r.quotes).length) { state.live.idx = r.quotes; state.live.idxTime = r.time; }
+      if (Object.keys(r.quotes).length) { state.live.idx = r.quotes; state.live.idxTime = r.time; evalFoLog(); }
       state.live.idxErr = r.errors;
       if (state.tab === "home" || state.tab === "fo") render();
     }, function () {});
@@ -872,7 +977,8 @@
   };
   function renderHeaderOnly() {
     var d = state.data;
-    $("updated").textContent = state.live.idxTime ? "🟢 " + t("liveAt") + " " + fmtDT(state.live.idxTime).split(", ")[1] + " · " + t("newsAi") + " " + ago(d.generated_at) : t("updated") + ": " + ago(d.generated_at);
+    var old = marketHours() && (Date.now() - new Date(d.generated_at).getTime()) > 40 * 60000;
+    $("updated").textContent = (state.live.idxTime ? "🟢 " + t("liveAt") + " " + fmtDT(state.live.idxTime).split(", ")[1] + " · " + t("newsAi") + " " + ago(d.generated_at) : t("updated") + ": " + ago(d.generated_at)) + (old ? " ⚠️" : "");
   }
   setInterval(function () { if (state.data) renderHeaderOnly(); }, 60000);
 

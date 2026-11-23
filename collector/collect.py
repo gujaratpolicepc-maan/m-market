@@ -371,8 +371,56 @@ def cnbc_batch(yahoo_syms):
         if q:
             if pct is not None:
                 q["pct"] = round(pct, 2)
+            for k in ("open", "high", "low"):
+                if _num(row.get(k)):
+                    q[k] = _num(row.get(k))
             out[ysym] = q
     return out
+
+
+GIFT_URLS = [
+    "https://priceapi.moneycontrol.com/technicalCompanyData/globalMarket/getGlobalIndicesListingData?view=overview&deviceType=W",
+    "https://priceapi.moneycontrol.com/technicalCompanyData/globalMarket/getGlobalIndicesListingData?view=ext&deviceType=W",
+]
+
+
+def _find_gift(js):
+    """walk any JSON and return the first object that looks like the GIFT Nifty quote"""
+    stack = [js]
+    while stack:
+        v = stack.pop()
+        if isinstance(v, dict):
+            txt = " ".join(str(x) for x in v.values() if isinstance(x, str)).upper()
+            if ("GIFT" in txt or "SGX" in txt) and "NIFTY" in txt:
+                return v
+            stack.extend(v.values())
+        elif isinstance(v, list):
+            stack.extend(v)
+    return None
+
+
+def gift_nifty():
+    errs = []
+    for url in GIFT_URLS:
+        try:
+            r = HTTP.get(url, timeout=15)
+            r.raise_for_status()
+            row = _find_gift(r.json())
+            if not row:
+                errs.append("not in feed")
+                continue
+            price = _pick(row, ["lastprice", "ltp", "lastPrice", "price", "current", "last", "close"])
+            pct = _pick(row, ["percentchange", "pchange", "chgper", "change_per", "perChange", "percChange", "changePercent"])
+            prev = _pick(row, ["prevclose", "previousclose", "prev_close", "prevClose", "previousClose"])
+            if price and not prev and pct is not None:
+                prev = price / (1 + pct / 100)
+            q = _q(price, prev)
+            if q:
+                return q
+            errs.append("fields: " + ",".join(list(row.keys())[:12]))
+        except Exception as e:
+            errs.append(str(e)[:60])
+    raise RuntimeError("; ".join(errs))
 
 
 def _q(price, prev, ts=None, closes=None):
@@ -391,6 +439,9 @@ def nse_indices():
     for row in r.json().get("data", []):
         q = _q(row.get("last"), row.get("previousClose"))
         if q:
+            for k in ("open", "high", "low"):
+                if _num(row.get(k)):
+                    q[k] = _num(row.get(k))
             out[row.get("index", "").upper()] = q
     return out
 
@@ -542,6 +593,13 @@ def collect_markets(sources, prev_markets=None):
         key = NSE_NAMES.get(m["name"])
         if key and key in nse:
             got[m["sym"]] = nse[key]
+    # 1b) GIFT Nifty (Moneycontrol feed) — best pre-open signal
+    if any(m["sym"] == "GIFTNIFTY" for _, m in all_items):
+        try:
+            got["GIFTNIFTY"] = gift_nifty()
+            status.append({"name": "GIFT Nifty (Moneycontrol)", "ok": True, "count": 1})
+        except Exception as e:
+            status.append({"name": "GIFT Nifty (Moneycontrol)", "ok": False, "error": str(e)[:150]})
     # 2) CNBC (works from cloud servers, no key)
     need = sorted({m["sym"] for _, m in all_items if m["sym"] not in got})
     if need:
@@ -689,7 +747,7 @@ def fmt_pct(p):
 
 def global_score(markets):
     num, den, reasons = 0.0, 0.0, []
-    for grp in ("global", "macro"):
+    for grp in ("global", "macro", "india"):
         for q in markets.get(grp, []):
             w, p = q.get("w", 0), q.get("pct")
             if not w or p is None or q.get("stale"):
@@ -701,12 +759,18 @@ def global_score(markets):
     def get(name):
         for grp in ("global", "macro", "india"):
             for q in markets.get(grp, []):
-                if q["name"] == name and q.get("pct") is not None:
+                if q["name"] == name and q.get("pct") is not None and not q.get("stale"):
                     return q["pct"]
         return None
 
     def add(t, gu, en):
         reasons.append((t, gu, en))
+
+    gift = get("GIFT Nifty")
+    if gift is not None:
+        add("pos" if gift > 0.1 else "neg" if gift < -0.1 else "neu",
+            f"GIFT Nifty {fmt_pct(gift)} — ઓપનિંગનો સૌથી મહત્વનો સંકેત",
+            f"GIFT Nifty {fmt_pct(gift)} — the key opening signal")
 
     fut = get("S&P 500 Futures")
     if fut is not None and abs(fut) >= 0.15:
@@ -1209,6 +1273,88 @@ def collect_options():
 # --------------------------------------------------------------------------
 # Track record: what we said vs what Nifty did
 # --------------------------------------------------------------------------
+# --------------------------------------------------------------------------
+# Prediction ledger: every forecast is stored and later scored against what Nifty actually did
+# --------------------------------------------------------------------------
+def prob_up(score):
+    return round(0.5 + 0.3 * math.tanh(1.5 * score), 3)
+
+
+def _mq(markets, name, grp="india"):
+    return next((q for q in markets.get(grp, []) if q["name"] == name and not q.get("stale")), None)
+
+
+def dir_of(p_up=None, pct=None):
+    if p_up is not None:
+        return 1 if p_up >= 0.55 else -1 if p_up <= 0.45 else 0
+    return 1 if pct > 0.25 else -1 if pct < -0.25 else 0
+
+
+def update_ledger(prev, outlook, ai, markets, session, phase, now_ist):
+    led = dict(prev.get("ledger") or {})
+    ai_label = ((ai or {}).get("outlook") or {}).get("label")
+    score = outlook["score"]
+    if ai_label in LABEL_SCORE:
+        score = 0.5 * score + 0.5 * LABEL_SCORE[ai_label]
+    n = _mq(markets, "Nifty 50")
+    vix = _mq(markets, "India VIX")
+    gift = _mq(markets, "GIFT Nifty")
+    if phase in ("pre", "closed"):
+        key = str(session)
+        e = led.get(key, {})
+        ref = n["price"] if n else None
+        # GIFT Nifty move since the Indian close = the expected opening gap
+        if gift and gift.get("price") and not e.get("gift_ref"):
+            e["gift_ref"] = gift["price"]
+        gap = ((gift["price"] / e["gift_ref"] - 1) * 100) if (gift and gift.get("price") and e.get("gift_ref")) else None
+        sigma = (vix["price"] / math.sqrt(252)) if vix and vix.get("price") else 0.8   # % 1-day move (≈68%)
+        f = {"made_at": now_utc().isoformat(), "label": ai_label or outlook["label"], "score": round(score, 3),
+             "prob_up": prob_up(score), "ref": ref, "gap_pred": round(gap, 2) if gap is not None else None,
+             "sigma": round(sigma, 2)}
+        if ref:
+            center = ref * (1 + (gap or 0) / 100)
+            f["range_lo"], f["range_hi"] = round(center * (1 - sigma / 100)), round(center * (1 + sigma / 100))
+        e["forecast"] = f
+        led[key] = e
+    # record what actually happened today (after the close)
+    today = str(now_ist.date())
+    t = now_ist.hour * 60 + now_ist.minute
+    if n and today in led and "actual" not in led[today] and now_ist.weekday() < 5 and t >= 15 * 60 + 35:
+        f = led[today].get("forecast") or {}
+        a = {"close": n["price"], "close_pct": n["pct"], "high": n.get("high"), "low": n.get("low"), "open": n.get("open")}
+        if n.get("open") and n.get("prev"):
+            a["open_gap"] = round((n["open"] - n["prev"]) / n["prev"] * 100, 2)
+        hits = {}
+        if f.get("prob_up") is not None:
+            hits["dir"] = dir_of(f["prob_up"]) == dir_of(pct=n["pct"])
+            hits["pred_dir"] = dir_of(f["prob_up"])
+        if f.get("gap_pred") is not None and a.get("open_gap") is not None:
+            g, og = f["gap_pred"], a["open_gap"]
+            hits["gap"] = (abs(g) < 0.15 and abs(og) < 0.3) or (g * og > 0 and abs(g) >= 0.15)
+        if f.get("range_lo") and f.get("range_hi"):
+            hits["range"] = f["range_lo"] <= n["price"] <= f["range_hi"]
+        a["hits"] = hits
+        led[today]["actual"] = a
+    led = dict(sorted(led.items())[-150:])
+    return led, ledger_stats(led)
+
+
+def ledger_stats(led):
+    done = [v for k, v in sorted(led.items()) if v.get("actual")]
+
+    def summ(rows):
+        out = {"n": len(rows)}
+        for k in ("dir", "gap", "range"):
+            xs = [r["actual"]["hits"][k] for r in rows if k in r["actual"].get("hits", {})]
+            out[k] = {"hit": sum(1 for x in xs if x), "n": len(xs)}
+        dirs = [r for r in rows if r["actual"].get("hits", {}).get("pred_dir") not in (None, 0)]
+        out["dir_called"] = {"hit": sum(1 for r in dirs if r["actual"]["hits"]["dir"]), "n": len(dirs)}
+        ups = [r for r in rows if r["actual"].get("close_pct") is not None]
+        out["baseline_up"] = {"hit": sum(1 for r in ups if dir_of(pct=r["actual"]["close_pct"]) == 1), "n": len(ups)}
+        return out
+    return {"last20": summ(done[-20:]), "all": summ(done)}
+
+
 def update_history(prev, outlook, ai, markets, session, phase, now_ist, options=None):
     hist = prev.get("history", {})
     key = str(session)
@@ -1304,6 +1450,10 @@ def main():
         "sources": feed_status + mkt_status + opt_status,
     }
     data["history"] = update_history(prev, outlook, ai, markets, session, phase, now_ist, options)
+    data["ledger"], data["ledger_stats"] = update_ledger(prev, outlook, ai, markets, session, phase, now_ist)
+    f = data["ledger"].get(str(session), {}).get("forecast")
+    if f:
+        data["forecast"] = f
 
     tmp = out_file + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:

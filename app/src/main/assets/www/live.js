@@ -134,13 +134,36 @@
     });
   }
 
+  function giftNifty() {
+    var url = "https://priceapi.moneycontrol.com/technicalCompanyData/globalMarket/getGlobalIndicesListingData?view=overview&deviceType=W";
+    return njson(url).then(function (js) {
+      var stack = [js], row = null;
+      while (stack.length && !row) {
+        var v = stack.pop();
+        if (Array.isArray(v)) { v.forEach(function (x) { stack.push(x); }); continue; }
+        if (v && typeof v === "object") {
+          var txt = Object.keys(v).map(function (k) { return typeof v[k] === "string" ? v[k] : ""; }).join(" ").toUpperCase();
+          if ((txt.indexOf("GIFT") >= 0 || txt.indexOf("SGX") >= 0) && txt.indexOf("NIFTY") >= 0) row = v;
+          else Object.keys(v).forEach(function (k) { stack.push(v[k]); });
+        }
+      }
+      if (!row) throw new Error("GIFT not in feed");
+      var x = q(pick(row, ["lastprice", "ltp", "lastPrice", "price", "current", "last", "close"]),
+        pick(row, ["prevclose", "previousclose", "prev_close", "prevClose", "previousClose"]),
+        pick(row, ["percentchange", "pchange", "chgper", "change_per", "perChange", "percChange", "changePercent"]));
+      if (!x) throw new Error("GIFT fields: " + Object.keys(row).slice(0, 10).join(","));
+      return { "GIFT Nifty": x };
+    });
+  }
+
   /** returns {quotes: {name: {price, prev, pct}}, time, errors: []} */
   function indices() {
     var out = {}, errors = [];
     function safe(p, label) { return p.then(function (r) { Object.keys(r || {}).forEach(function (k) { if (!out[k]) out[k] = r[k]; }); }, function (e) { errors.push(label + ": " + e.message); }); }
     return Promise.all([
       safe(nseIndices(), "NSE"),
-      safe(bseIndices(), "BSE")
+      safe(bseIndices(), "BSE"),
+      safe(giftNifty(), "GIFT")
     ]).then(function () {
       var miss = ["Sensex", "BANKEX", "Gold", "Silver", "Nifty 50", "Bank Nifty", "Dollar Index", "US 10Y Yield", "USD/INR"].filter(function (n) { return !out[n]; });
       return safe(cnbcQuotes(miss), "CNBC");
