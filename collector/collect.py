@@ -384,17 +384,37 @@ GIFT_URLS = [
 ]
 
 
+def _is_gift(txt):
+    t = txt.upper()
+    return ("GIFT" in t or "SGX" in t) and "NIFTY" in t
+
+
 def _find_gift(js):
-    """walk any JSON and return the first object that looks like the GIFT Nifty quote"""
+    """walk any JSON and return the GIFT Nifty quote as a dict.
+    Handles both list-of-dicts feeds and 'header ids + rows as lists' feeds (Moneycontrol)."""
+    header = None
+    stack = [js]
+    while stack:
+        v = stack.pop()
+        if isinstance(v, list) and v and all(isinstance(x, dict) and "id" in x for x in v):
+            header = [str(x["id"]) for x in v]
+        elif isinstance(v, dict):
+            stack.extend(v.values())
+        elif isinstance(v, list):
+            stack.extend(v)
     stack = [js]
     while stack:
         v = stack.pop()
         if isinstance(v, dict):
-            txt = " ".join(str(x) for x in v.values() if isinstance(x, str)).upper()
-            if ("GIFT" in txt or "SGX" in txt) and "NIFTY" in txt:
+            txt = " ".join(str(x) for x in v.values() if isinstance(x, str))
+            if _is_gift(txt):
                 return v
             stack.extend(v.values())
         elif isinstance(v, list):
+            if v and all(not isinstance(x, (dict, list)) for x in v) and any(isinstance(x, str) and _is_gift(x) for x in v):
+                if header and len(header) == len(v):
+                    return dict(zip(header, v))
+                return {f"c{i}": x for i, x in enumerate(v)}
             stack.extend(v)
     return None
 
@@ -423,17 +443,17 @@ def gift_nifty():
             js = r.json()
             row = _find_gift(js)
             if not row:
-                errs.append("feed names: " + "|".join(_names(js)))
+                errs.append("no GIFT row; sample: " + json.dumps(js)[:400])
                 continue
             price = _pick(row, ["lastprice", "ltp", "lastPrice", "price", "current", "last", "close", "lastValue"])
-            pct = _pick(row, ["percentchange", "pchange", "chgper", "change_per", "perChange", "percChange", "changePercent", "chgPer"])
-            prev = _pick(row, ["prevclose", "previousclose", "prev_close", "prevClose", "previousClose"])
+            pct = _pick(row, ["percent_change", "percentchange", "pchange", "chgper", "change_per", "perChange", "percChange", "changePercent", "chgPer"])
+            prev = _pick(row, ["prev_close", "prevclose", "previousclose", "prevClose", "previousClose"])
             if price and not prev and pct is not None:
                 prev = price / (1 + pct / 100)
             q = _q(price, prev)
             if q:
                 return q
-            errs.append("fields: " + ",".join(list(row.keys())[:12]))
+            errs.append("row: " + json.dumps(row)[:300])
         except Exception as e:
             errs.append(str(e)[:60])
     # fallback: Moneycontrol global-indices web page
