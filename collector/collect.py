@@ -445,6 +445,8 @@ def gift_nifty():
             if not row:
                 errs.append("no GIFT row; sample: " + json.dumps(js)[:400])
                 continue
+            if "c2" in row and "c4" in row:   # Moneycontrol row: symbol,name,price,net_change,%change,high,low,open,prev_close,...
+                row = {"price": row.get("c2"), "percent_change": row.get("c4"), "prev_close": row.get("c8")}
             price = _pick(row, ["lastprice", "ltp", "lastPrice", "price", "current", "last", "close", "lastValue"])
             pct = _pick(row, ["percent_change", "percentchange", "pchange", "chgper", "change_per", "perChange", "percChange", "changePercent", "chgPer"])
             prev = _pick(row, ["prev_close", "prevclose", "previousclose", "prevClose", "previousClose"])
