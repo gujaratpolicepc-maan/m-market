@@ -333,7 +333,8 @@
     (o.chain || []).forEach(function (r) { if (Math.abs(r.k - o.atm) <= 3 * o.step) { ce += r.ce_chg || 0; pe += r.pe_chg || 0; } });
     sig.oi = (Math.abs(ce) + Math.abs(pe)) ? clamp((pe - ce) / (Math.abs(ce) + Math.abs(pe))) : 0;   // put writing = bullish
     sig.momentum = ctx.pct == null ? 0 : clamp(ctx.pct / 0.8);
-    var b = sig.outlook * 0.35 + sig.pcr * 0.15 + sig.maxpain * 0.1 + sig.oi * 0.2 + sig.momentum * 0.2;
+    // direction comes mainly from the pre-open outlook and option-writer positioning, not from chasing the move
+    var b = sig.outlook * 0.4 + sig.pcr * 0.15 + sig.maxpain * 0.1 + sig.oi * 0.25 + sig.momentum * 0.1;
     if (aiBias === "bullish") b += 0.1; else if (aiBias === "bearish") b -= 0.1;
 
     var today = new Date(Date.now() + 5.5 * 3600000); today = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
@@ -366,13 +367,18 @@
   }
 
   /** loads expiries (cached) + chain for one index. returns metrics with .time/.source/.expiries */
-  var expCache = {};
+  var expCache = {}, expDay = null;
   function options(key, expiry, spotHint) {
     var cfg = OPT[key];
     if (!cfg) return Promise.reject(new Error("unknown index"));
+    var dkey = new Date(Date.now() + 5.5 * 3600000).toISOString().slice(0, 10);
+    if (expDay !== dkey) { expCache = {}; expDay = dkey; }
     var expP = expCache[key] ? Promise.resolve(expCache[key]) :
       (cfg.ex === "NSE" ? nseExpiries(cfg.sym) : bseExpiries(cfg.scrip)).then(function (e) { if (e.length) expCache[key] = e; return e; });
     return expP.then(function (exps) {
+      var now = new Date(Date.now() + 5.5 * 3600000);
+      var today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+      exps = exps.filter(function (e) { var d = expiryDate(e); return !d || d.getTime() >= today; });
       var exp = expiry && exps.indexOf(expiry) >= 0 ? expiry : exps[0];
       if (!exp) throw new Error("no expiry list");
       var chainP = cfg.ex === "NSE" ? nseChain(cfg.sym, exp) : bseChain(cfg.scrip, exp);
@@ -385,6 +391,27 @@
         m.index = cfg.idx || null;
         return m;
       });
+    });
+  }
+
+  /** NSE market status: {open: bool, status: "Open"/"Closed", tradeDate: "23-Nov-2026"} */
+  function marketStatus() {
+    return njson("https://www.nseindia.com/api/marketStatus").then(function (js) {
+      var arr = js.marketState || [];
+      var cm = arr.filter(function (m) { return /capital/i.test(m.market || ""); })[0] || arr[0] || {};
+      var st = String(cm.marketStatus || "");
+      return { open: /^open/i.test(st), status: st, tradeDate: cm.tradeDate || null, message: cm.marketStatusMessage || "" };
+    });
+  }
+  /** trading holidays (dates like "24-Nov-2026") */
+  function holidays() {
+    return njson("https://www.nseindia.com/api/holiday-master?type=trading").then(function (js) {
+      var out = [];
+      Object.keys(js || {}).forEach(function (seg) {
+        if (!Array.isArray(js[seg]) || !/CM|FO/.test(seg)) return;
+        js[seg].forEach(function (h) { if (h.tradingDate && out.indexOf(h.tradingDate) < 0) out.push(h.tradingDate); });
+      });
+      return out;
     });
   }
 
@@ -401,6 +428,9 @@
     available: !!(NATIVE && NATIVE.http),
     indices: indices,
     fii: fii,
+    marketStatus: marketStatus,
+    holidays: holidays,
+    expiryDate: expiryDate,
     options: options,
     idea: idea,
     OPT: OPT,

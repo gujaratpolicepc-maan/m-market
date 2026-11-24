@@ -48,6 +48,17 @@
       indiaToday: "આજનું ભારતીય બજાર (લાઇવ)", forecastNext: "આગાહી (AI/નિયમ)", niftyClose: "આજે Nifty",
       inrApprox: "ભારતમાં અંદાજિત ભાવ (6% ડ્યૂટી સહિત, GST વગર)", per10g: "/10 ગ્રામ", perKg: "/કિલો", liveRule: "લાઇવ ડેટા પરથી",
       segNews: "📰 સમાચાર", segLedger: "🎯 હિસાબ",
+      lockedT: "આજનો ટ્રેડ પ્લાન (લૉક — આખો દિવસ બદલાશે નહીં)", lastChk: "છેલ્લું ચેકિંગ", entryP: "એન્ટ્રી પ્રીમિયમ", atCost: "ખર્ચ પર",
+      exitBelow: "આ નીચે જાય તો બહાર", exitAbove: "આ ઉપર જાય તો બહાર", nowPrem: "અત્યારનું પ્રીમિયમ", hiLo: "ઊંચું/નીચું", resultL: "પરિણામ", onPrem: "(પ્રીમિયમ પર)",
+      dayDone: "આ ઇન્ડેક્સ માટે આજનો પ્લાન પૂરો — આજે નવો પ્લાન નહીં આપાય.",
+      lockRule: "દિવસમાં એક જ પ્લાન: 9:30 પછી પાકો સંકેત (score ±0.30 થી વધુ) મળે ત્યારે જ આપાય છે, અને બજાર ઉપર-નીચે થાય તો પણ બદલાતો નથી.",
+      exitBy2: "બપોરે 3:15 સુધીમાં પોઝિશન બંધ કરો (ઇન્ટ્રાડે પ્લાન).", nowReading: "અત્યારનું વાંચન", needScore: "પ્લાન માટે ±0.30 જોઈએ",
+      rsClosed: "બજાર બંધ — નવો પ્લાન નહીં", rsEarly: "9:30 પછી પ્લાન આવશે (પહેલી 15 મિનિટ ખૂબ અસ્થિર)", rsLate: "આજે નવા પ્લાનનો સમય પૂરો",
+      rsNoPrem: "પ્રીમિયમનો ડેટા નથી", rsWeak: "સ્પષ્ટ સેટઅપ નથી — આજે ટ્રેડ ટાળો કે રાહ જુઓ",
+      pst: { active: "🟡 ચાલુ", t1: "✅ ટાર્ગેટ 1 હિટ (SL હવે ખર્ચ પર)", t2: "✅✅ ટાર્ગેટ 2 હિટ", sl: "❌ સ્ટોપ-લોસ હિટ", t1_sl: "✅ T1 પછી ખર્ચ પર બહાર",
+        invalid: "⚠️ ઇન્ડેક્સ લેવલ તૂટ્યું — બહાર", timeout: "⏱ સમય પૂરો — બંધ", t1_close: "✅ T1 પછી સમય પૂરો" },
+      winRate: "નફાવાળા પ્લાન", avgPnl: "સરેરાશ પરિણામ (પ્રીમિયમ પર)",
+      holidayToday: "આજે બજારમાં રજા છે", holidayShort: "રજા", mktClosed: "બજાર હાલ બંધ છે", lastSession: "છેલ્લું સત્ર", todayClosedT: "આજે બજાર બંધ",
       planTime: "પ્લાન આપ્યાનો સમય", planData: "ડેટા", firstSig: "આજનો પહેલો સંકેત", expL: "એક્સપાયરી", daysLeft: function (d) { return d === 0 ? "આજે" : d + " દિવસ બાકી"; },
       probUp: "ઉપર બંધ થવાની સંભાવના", rangeL: "અપેક્ષિત Nifty રેન્જ", giftGap: "GIFT Nifty મુજબ ઓપનિંગ", noClear: "સ્પષ્ટ સંકેત નથી (55% થી ઓછું)",
       gapUp: "ગેપ-અપ", gapDown: "ગેપ-ડાઉન", flat: "સપાટ",
@@ -133,6 +144,17 @@
       indiaToday: "Indian market today (live)", forecastNext: "Forecast (AI/rule)", niftyClose: "Nifty today",
       inrApprox: "Approx. India price (incl. 6% duty, excl. GST)", per10g: "/10 g", perKg: "/kg", liveRule: "from live data",
       segNews: "📰 News", segLedger: "🎯 Track record",
+      lockedT: "Today's trade plan (locked — will not change today)", lastChk: "Last check", entryP: "Entry premium", atCost: "at cost",
+      exitBelow: "exit if below", exitAbove: "exit if above", nowPrem: "Premium now", hiLo: "High/Low", resultL: "Result", onPrem: "(on premium)",
+      dayDone: "Today's plan for this index is finished — no new plan today.",
+      lockRule: "One plan per day: given only after 9:30 when the signal is strong (score beyond ±0.30), and it does not flip when the market moves.",
+      exitBy2: "Close the position by 3:15 PM (intraday plan).", nowReading: "Current reading", needScore: "a plan needs ±0.30",
+      rsClosed: "Market closed — no new plan", rsEarly: "Plan comes after 9:30 (first 15 minutes are too noisy)", rsLate: "Time for new plans is over today",
+      rsNoPrem: "No premium data", rsWeak: "No clear set-up — avoid trading or wait",
+      pst: { active: "🟡 Running", t1: "✅ Target 1 hit (SL moved to cost)", t2: "✅✅ Target 2 hit", sl: "❌ Stop-loss hit", t1_sl: "✅ Exit at cost after T1",
+        invalid: "⚠️ Index level broken — exit", timeout: "⏱ Time over — closed", t1_close: "✅ Time over after T1" },
+      winRate: "Profitable plans", avgPnl: "Average result (on premium)",
+      holidayToday: "Market holiday today", holidayShort: "holiday", mktClosed: "Market is closed now", lastSession: "Last session", todayClosedT: "Market closed today",
       planTime: "Plan given at", planData: "data", firstSig: "Today's first signal", expL: "Expiry", daysLeft: function (d) { return d === 0 ? "today" : d + " day(s) left"; },
       probUp: "Chance of closing higher", rangeL: "Expected Nifty range", giftGap: "Opening as per GIFT Nifty", noClear: "No clear signal (below 55%)",
       gapUp: "gap-up", gapDown: "gap-down", flat: "flat",
@@ -335,7 +357,7 @@
     var s = d.session || {};
     var lp = liveIndia(), nifty = (state.live.idx || {})["Nifty 50"];
     var h = "";
-    if (lp != null && marketHours()) {     // market open: show what the Indian market is actually doing
+    if (lp != null && marketOpen()) {     // market open: show what the Indian market is actually doing
       var lab = labelFromPct(lp), c = lab.indexOf("positive") >= 0 ? "pos" : lab.indexOf("negative") >= 0 ? "neg" : "neu";
       var pos = Math.max(2, Math.min(98, 50 + lp * 30));
       h += "<div class='mood " + c + "'><div class='when'>" + t("indiaToday") + " — " + dayName(todayIST()) + " · " + fmtDT(state.live.idxTime).split(", ")[1] + "</div>" +
@@ -344,16 +366,17 @@
         "<span class='badge'>" + t("forecastNext") + ": " + labels[fLabel] + "</span></div>";
       return h;
     }
+    if (isHolidayToday(d)) h += "<div class='closed-b'>🔒 " + t("holidayToday") + (state.live.mkt && state.live.mkt.tradeDate ? " · " + t("lastSession") + ": " + esc(state.live.mkt.tradeDate) : "") + "</div>";
     var c2 = fLabel.indexOf("positive") >= 0 ? "pos" : fLabel.indexOf("negative") >= 0 ? "neg" : "neu";
     var conf = ai ? ai.confidence : rule.confidence;
     var when = t(s.phase === "live" ? "live" : s.phase === "pre" ? "pre" : "closed") + " — " + dayName(s.date);
     var pos2 = rule.score != null ? Math.max(2, Math.min(98, (rule.score + 1) * 50)) : 50;
-    h = "<div class='mood " + c2 + "'><div class='when'>" + esc(when) + "</div>" +
+    h += "<div class='mood " + c2 + "'><div class='when'>" + esc(when) + "</div>" +
       "<div class='big " + c2 + "-t'>" + labels[fLabel] + "</div>" +
       "<div class='meter'><i style='left:" + pos2 + "%'></i></div>" +
       "<span class='badge'>" + t("confL") + ": " + (t("conf")[conf] || t("conf").low) + "</span>" +
       (ai ? "<span class='badge pos'>" + t("aiBadge") + "</span>" : "<span class='badge'>" + t("ruleBadge") + "</span>") +
-      (nifty && nifty.pct != null ? "<span class='badge " + cls(nifty.pct) + "'>" + t("niftyClose") + " " + pct(nifty.pct) + "</span>" : "");
+      (nifty && nifty.pct != null ? "<span class='badge " + cls(nifty.pct) + "'>" + (isHolidayToday(d) ? t("lastSession") + ": Nifty" : t("niftyClose")) + " " + pct(nifty.pct) + "</span>" : "");
     h += forecastBox(d);
     return h + "</div>";
   }
@@ -577,23 +600,29 @@
           "<td>" + (f.prob_up != null ? Math.round(f.prob_up * 100) + "%↑" : "–") + "<br><span class='muted'>" + esc((labels[f.label] || "").split(" ")[0]) + "</span></td>" +
           "<td>" + (f.gap_pred != null ? pct(f.gap_pred) : "–") + "<br>" + (a && a.open_gap != null ? pct(a.open_gap) : "") + "</td>" +
           "<td>" + (f.range_lo ? f.range_lo + "<br>" + f.range_hi : "–") + "</td>" +
-          "<td>" + (a ? num(a.close) + "<br><span class='" + cls(a.close_pct) + "-t'>" + pct(a.close_pct) + "</span>" : t("pending")) + "</td>" +
-          "<td>" + (a ? "D" + ok(hi.dir) + " G" + ok(hi.gap) + " R" + ok(hi.range) : "⏳") + "</td></tr>";
+          "<td>" + (a ? num(a.close) + "<br><span class='" + cls(a.close_pct) + "-t'>" + pct(a.close_pct) + "</span>" : led[k].holiday ? "—" : t("pending")) + "</td>" +
+          "<td>" + (led[k].holiday ? "🏖 " + t("holidayShort") : a ? "D" + ok(hi.dir) + " G" + ok(hi.gap) + " R" + ok(hi.range) : "⏳") + "</td></tr>";
       }).join("") + "</table></div><div class='muted small' style='margin-top:6px'>D = દિશા/direction · G = ગેપ/gap · R = રેન્જ/range</div>";
     }
-    h += "</div>" + foLogCard();
+    h += "</div>" + planLogCard();
     return h;
   }
-  function foLogCard() {
-    var log = store("mm_fo_log") || [];
+  function planLogCard() {
+    var all = plansAll(), rows = [];
+    Object.keys(all).sort().reverse().forEach(function (day) { Object.keys(all[day]).forEach(function (k) { rows.push(all[day][k]); }); });
     var h = "<div class='card'><h3>" + t("foLog") + "</h3><div class='muted small' style='margin-bottom:6px'>" + t("foLogNote") + "</div>";
-    if (!log.length) return h + "<div class='muted'>" + t("foLogEmpty") + "</div></div>";
-    var done = log.filter(function (x) { return x.close != null; }), hit = done.filter(function (x) { return x.ok; }).length;
-    if (done.length) h += statRow(t("statDir"), { hit: hit, n: done.length });
-    h += log.slice().reverse().slice(0, 25).map(function (x) {
-      return "<div class='row'><div class='l small'><b>" + esc(x.name) + " " + x.strike + " " + x.opt + "</b> · " + x.date.slice(8) + "/" + x.date.slice(5, 7) + " " + x.time +
-        "<div class='muted'>" + t("spot") + " " + num(x.spot) + " · ₹" + x.premium + "</div></div><div class='r small'>" +
-        (x.close != null ? (x.ok ? "✅" : "❌") + " " + num(x.close) : "⏳ " + t("pending")) + "</div></div>";
+    if (!rows.length) return h + "<div class='muted'>" + t("foLogEmpty") + "</div></div>";
+    var done = rows.filter(function (p) { return p.pnl != null; });
+    if (done.length) {
+      var wins = done.filter(function (p) { return p.pnl > 0; }).length;
+      var avg = Math.round(done.reduce(function (a, p) { return a + p.pnl; }, 0) / done.length * 10) / 10;
+      h += statRow(t("winRate"), { hit: wins, n: done.length }) +
+        "<div class='row'><div class='l small'>" + t("avgPnl") + "</div><div class='r'><b class='" + cls(avg) + "-t'>" + (avg > 0 ? "+" : "") + avg + "%</b></div></div>";
+    }
+    h += rows.slice(0, 30).map(function (p) {
+      var res = p.pnl != null ? "<b class='" + cls(p.pnl) + "-t'>" + (p.pnl > 0 ? "+" : "") + p.pnl + "%</b><div class='muted'>" + (t("pst")[p.status] || p.status) + "</div>" : "⏳ " + (t("pst")[p.status] || p.status);
+      return "<div class='row'><div class='l small'><b>" + esc(p.name) + " " + p.strike + " " + p.opt + "</b> · " + p.date.slice(8) + "/" + p.date.slice(5, 7) + " " + p.time +
+        "<div class='muted'>₹" + p.premium + " → SL ₹" + p.sl + " · T1 ₹" + p.t1 + "</div></div><div class='r small'>" + res + "</div></div>";
     }).join("");
     return h + "</div>";
   }
@@ -694,15 +723,16 @@
   var FO_KEYS = ["nifty", "banknifty", "finnifty", "midcpnifty", "sensex", "bankex"];
   var FO_NAMES = { nifty: "Nifty", banknifty: "Bank Nifty", finnifty: "Fin Nifty", midcpnifty: "Midcap Select", sensex: "Sensex", bankex: "BANKEX" };
 
-  function loadOpt(key, expiry) {
+  function loadOpt(key, expiry, quiet) {
     if (!LIVE.available) return;
     var L = state.live;
     L.optLoading[key] = true;
-    if (state.tab === "fo") render();
+    if (state.tab === "fo" && !quiet) render();
     var hintName = { nifty: "Nifty 50", banknifty: "Bank Nifty", finnifty: "Fin Nifty", midcpnifty: "Midcap Select", sensex: "Sensex", bankex: "BANKEX" }[key];
     var hint = L.idx && L.idx[hintName] ? L.idx[hintName].price : null;
     LIVE.options(key, expiry || L.exp[key], hint).then(function (m) {
       L.opt[key] = m; L.optErr[key] = null; L.exp[key] = m.expiry;
+      trackPlan(key, m);
       if (m.index && m.spot && !(L.idx && L.idx[m.index])) { L.idx = L.idx || {}; L.idx[m.index] = { price: m.spot, pct: null }; }
     }, function (e) {
       L.optErr[key] = e.message || String(e);
@@ -750,92 +780,171 @@
     return h + "</div>";
   }
 
-  function logFoPlan(key, o, i, idxName) {
-    if (!i || (i.action !== "BUY_CE" && i.action !== "BUY_PE") || !marketHours()) return;
-    var log = store("mm_fo_log") || [], day = todayIST();
-    if (log.some(function (x) { return x.date === day && x.key === key; })) return;
-    var now = new Date(Date.now() + 5.5 * 3600000);
-    log.push({ date: day, key: key, name: o.name, idx: idxName, time: ("0" + now.getUTCHours()).slice(-2) + ":" + ("0" + now.getUTCMinutes()).slice(-2),
-      opt: i.opt, strike: i.strike, premium: i.premium, spot: o.spot, sl: i.sl_premium, t1: i.target_premium });
-    store("mm_fo_log", log.slice(-200));
+  // ---------- locked daily trade plan ----------
+  var IDXN = { nifty: "Nifty 50", banknifty: "Bank Nifty", finnifty: "Fin Nifty", midcpnifty: "Midcap Select", sensex: "Sensex", bankex: "BANKEX" };
+  function nowMin() { var d = new Date(Date.now() + 5.5 * 3600000); return d.getUTCHours() * 60 + d.getUTCMinutes(); }
+  function hhmm() { var d = new Date(Date.now() + 5.5 * 3600000); return ("0" + d.getUTCHours()).slice(-2) + ":" + ("0" + d.getUTCMinutes()).slice(-2); }
+  function plansAll() { return store("mm_plans") || {}; }
+  function planOf(day, key) { return (plansAll()[day] || {})[key] || null; }
+  function savePlan(p) {
+    var all = plansAll();
+    all[p.date] = all[p.date] || {}; all[p.date][p.key] = p;
+    var days = Object.keys(all).sort(); days.slice(0, Math.max(0, days.length - 60)).forEach(function (k) { delete all[k]; });
+    store("mm_plans", all);
   }
-  function evalFoLog() { // fill in the closing level for past signals
-    var log = store("mm_fo_log") || [], lv = state.live.idx || {}, day = todayIST(), changed = false;
-    var after = (function () { var d = new Date(Date.now() + 5.5 * 3600000); return d.getUTCHours() * 60 + d.getUTCMinutes() >= 15 * 60 + 35; })();
-    log.forEach(function (x) {
-      if (x.close != null) return;
-      var q = lv[x.idx]; if (!q || q.price == null) return;
-      var close = null;
-      if (x.date === day && after) close = q.price;
-      else if (x.date < day && q.prev && x.date === prevWeekday(day)) close = q.prev;
-      if (close != null) { x.close = close; x.ok = x.opt === "CE" ? close > x.spot : close < x.spot; changed = true; }
-    });
-    if (changed) store("mm_fo_log", log);
+  function premOf(o, strike, opt) {
+    var r = (o.chain || []).filter(function (x) { return x.k === strike; })[0];
+    return r ? (opt === "CE" ? r.ce_ltp : r.pe_ltp) : null;
   }
-  function prevWeekday(day) {
-    var d = new Date(day + "T00:00:00Z"); do { d = new Date(d.getTime() - 86400000); } while (d.getUTCDay() === 0 || d.getUTCDay() === 6);
-    return d.toISOString().slice(0, 10);
+  /** create the one plan of the day for this index, only when the set-up is strong enough */
+  function maybeLock(key, o, i) {
+    var day = todayIST();
+    if (planOf(day, key) || !marketOpen() || !i) return null;
+    var m = nowMin(), cutoff = i.expiryDay ? 13 * 60 + 30 : 14 * 60 + 30;
+    if (m < 9 * 60 + 30 || m > cutoff) return null;
+    if ((i.action !== "BUY_CE" && i.action !== "BUY_PE") || Math.abs(i.score) < 0.3 || !(i.premium > 0)) return null;
+    if (o.time && /^\d{2}-[A-Za-z]{3}-\d{4}/.test(o.time)) {   // never lock on yesterday's exchange data
+      var td = o.time.slice(0, 11), x = new Date(Date.now() + 5.5 * 3600000);
+      var want = ("0" + x.getUTCDate()).slice(-2) + "-" + ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][x.getUTCMonth()] + "-" + x.getUTCFullYear();
+      if (td !== want) return null;
+    }
+    var p = { date: day, key: key, name: o.name, idx: IDXN[key], time: hhmm(), expiry: o.expiry, expiryDay: !!i.expiryDay,
+      opt: i.opt, strike: i.strike, premium: i.premium, buy_low: i.buy_low, buy_high: i.buy_high,
+      sl: i.sl_premium, sl_pct: i.sl_pct, t1: i.target_premium, t2: i.target2_premium, spot: o.spot,
+      stop_level: i.stop_level, target_level: i.target_level, score: i.score, confidence: i.confidence,
+      spread: i.spread, status: "active", hi: i.premium, lo: i.premium, last: i.premium, last_time: hhmm() };
+    savePlan(p);
+    return p;
+  }
+  /** follow the locked plan with the latest option chain */
+  function trackPlan(key, o) {
+    var day = todayIST(), p = planOf(day, key);
+    if (!p || !o || o.expiry !== p.expiry) return;
+    if (p.status !== "active" && p.status !== "t1") return;
+    var pr = premOf(o, p.strike, p.opt);
+    if (pr == null) return;
+    p.last = pr; p.last_time = hhmm(); p.hi = Math.max(p.hi, pr); p.lo = Math.min(p.lo, pr);
+    var m = nowMin();
+    function close(st, exitP) { p.status = st; p.exit = exitP; p.exit_time = hhmm(); p.pnl = Math.round((exitP / p.premium - 1) * 1000) / 10; }
+    if (pr <= p.sl) close(p.status === "t1" ? "t1_sl" : "sl", p.status === "t1" ? p.t1 : p.sl);
+    else if (pr >= p.t2) close("t2", p.t2);
+    else if (p.status === "active" && pr >= p.t1) { p.status = "t1"; p.t1_time = hhmm(); p.sl = p.premium; }   // after T1: stop moves to cost
+    else if (p.stop_level && ((p.opt === "CE" && o.spot < p.stop_level) || (p.opt === "PE" && o.spot > p.stop_level))) close("invalid", pr);
+    if ((p.status === "active" || p.status === "t1") && (m >= 15 * 60 + 15 || (p.expiryDay && m >= 14 * 60 + 30))) close(p.status === "t1" ? "t1_close" : "timeout", pr);
+    savePlan(p);
   }
 
-  function planCard(n, i, o, meta) {
-    var b = i.bias || "neutral", c = b === "bullish" ? "pos" : b === "bearish" ? "neg" : "neu";
-    var head = i.action === "BUY_CE" ? t("buyCall") : i.action === "BUY_PE" ? t("buyPut") : t("noTrade");
-    var given = fmtDT(new Date().toISOString());
-    var stamp = "<div class='plan-ts'>🕒 " + t("planTime") + ": <b>" + given + "</b>" +
-      (meta && meta.time ? " · " + t("planData") + ": " + meta.time : "") +
-      "<br>📅 " + t("expL") + ": <b>" + esc(o.expiry || "—") + "</b>" + (i.dte != null ? " (" + t("daysLeft")(i.dte) + ")" : "");
-    var first = (store("mm_fo_log") || []).filter(function (x) { return x.date === todayIST() && x.name === o.name; })[0];
-    if (first) stamp += "<br>📌 " + t("firstSig") + ": <b>" + first.time + "</b> — " + first.strike + " " + first.opt + " @ ₹" + first.premium;
-    stamp += "</div>";
-    var h = "<div class='plan " + c + "'><div class='plan-t'>" + t("planT") + (i.expiryDay ? " <span class='badge neg'>" + t("expDayBadge") + "</span>" : "") + "</div>" + stamp +
-      "<div class='plan-big " + c + "-t'>" + (i.action === "BUY_CE" ? "📈 " : i.action === "BUY_PE" ? "📉 " : "⏸ ") + head + "</div>" +
-      "<span class='badge'>" + t("confT") + ": " + t("conf")[i.confidence || "low"] + "</span>";
-    if (i.premium) {
-      h += "<div class='plan-grid'>" +
-        "<div><span>" + t("strikeL") + "</span><b>" + i.strike + " " + i.opt + "</b></div>" +
-        "<div><span>" + t("premNow") + "</span><b>₹" + i.premium + "</b></div>" +
-        "<div class='wide'><span>" + t("buyZone") + "</span><b>₹" + i.buy_low + " – ₹" + i.buy_high + "</b></div>" +
-        "<div><span>" + t("slL") + " (−" + i.sl_pct + "%)</span><b class='neg-t'>₹" + i.sl_premium + "</b></div>" +
-        "<div><span>" + t("t1L") + "</span><b class='pos-t'>₹" + i.target_premium + "</b></div>" +
-        "<div><span>" + t("t2L") + "</span><b class='pos-t'>₹" + i.target2_premium + "</b></div>" +
-        "<div><span>" + esc(n) + " " + (i.opt === "CE" ? "↑" : "↓") + "</span><b>" + (i.target_level || "—") + "</b></div></div>" +
-        "<ul class='steps'><li>" + esc(t("spotInv")(n, i)) + "</li><li>" + (i.expiryDay ? t("exitBy") : esc(t("notExpiry")(i.dte == null ? "?" : i.dte))) + "</li><li>" + t("zoneNote") + "</li>" +
-        (i.spread ? "<li>" + esc(t("ideaSpread")({ opt: i.opt, spread: i.spread })) + "</li>" : "") + "</ul>";
-    } else if (i.action === "WAIT") {
-      h += "<div style='margin-top:6px'>" + esc(t("waitNote")(n, i)) + "</div>";
+  function foCard(o, aiPart, planHtml, meta) {
+    var n = o.name;
+    var h = "<div class='card'><h3>" + esc(n) + " · " + t("expiry") + " " + esc(o.expiry || "—") + "</h3>";
+    h += "<div class='ts'>🕒 " + t("dataTime") + ": <b>" + meta.time + "</b><br>" + meta.src + "</div>";
+    h += planHtml;
+    if (o.expiries && o.expiries.length > 1) {
+      h += "<label class='muted small'>" + t("expiryL") + ": <select id='expSel'>" + o.expiries.map(function (e) { return "<option" + (e === o.expiry ? " selected" : "") + ">" + esc(e) + "</option>"; }).join("") + "</select></label>";
     }
-    if (i.signals) {
-      var sn = t("sigN");
-      h += "<div class='sigs'><div class='muted small'>" + t("sigT") + ":</div>" + Object.keys(sn).map(function (k) {
-        var v = i.signals[k] || 0;
-        return "<span class='sig " + cls(v) + "'>" + sn[k] + " " + (v > 0.05 ? "▲" : v < -0.05 ? "▼" : "●") + "</span>";
-      }).join("") + "</div>";
+    h += "<div class='atm'><div class='atm-h'>" + t("atmCard") + "</div><div class='atm-row'>" +
+      "<div><div class='muted small'>ATM</div><div class='big2'>" + (o.atm || "—") + "</div></div>" +
+      "<div><div class='muted small'>CE ₹</div><div class='big2 pos-t'>" + (o.atm_ce == null ? "—" : o.atm_ce) + "</div></div>" +
+      "<div><div class='muted small'>PE ₹</div><div class='big2 neg-t'>" + (o.atm_pe == null ? "—" : o.atm_pe) + "</div></div></div>";
+    var st = o.straddle || ((o.atm_ce || 0) + (o.atm_pe || 0));
+    if (st) h += "<div class='small'>" + t("straddle") + ": <b>₹" + Math.round(st * 10) / 10 + "</b> · " + t("expMove") + "<b>" + Math.round(st) + "</b> (" + (o.atm ? Math.round(o.atm - st) + " – " + Math.round(o.atm + st) : "") + ")</div>";
+    h += "<div class='muted small'>" + t("iv") + " " + (o.iv == null ? "—" : o.iv + "%") + "</div></div>";
+    h += "<div class='grid'>" +
+      "<div class='tile'><div class='n'>" + t("spot") + "</div><div class='v'>" + num(o.spot) + "</div></div>" +
+      "<div class='tile'><div class='n'>" + t("pcr") + "</div><div class='v'>" + (o.pcr == null ? "—" : o.pcr) + "</div><div class='p muted'>" + (o.pcr == null ? "" : esc(t("pcrMean")(o.pcr))) + "</div></div>" +
+      "<div class='tile'><div class='n'>" + t("support") + "</div><div class='v pos-t'>" + (o.support || "—") + "</div></div>" +
+      "<div class='tile'><div class='n'>" + t("resistance") + "</div><div class='v neg-t'>" + (o.resistance || "—") + "</div></div>" +
+      "<div class='tile'><div class='n'>" + t("maxPain") + "</div><div class='v'>" + (o.max_pain || "—") + "</div></div>" +
+      "<div class='tile'><div class='n'>OTM CE / PE ₹</div><div class='v small'>" + (o.otm_ce == null ? "—" : o.otm_ce) + " / " + (o.otm_pe == null ? "—" : o.otm_pe) + "</div></div></div>";
+    if (o.chain && o.chain.length) {
+      var hd = t("chainH");
+      h += "<h3 style='margin-top:12px'>" + t("chainT") + "</h3><div class='tbl-wrap'><table class='chain'><tr>" + hd.map(function (x) { return "<th>" + x + "</th>"; }).join("") + "</tr>" +
+        o.chain.map(function (r) {
+          var c = r.k === o.atm ? "atm-r" : r.k === o.resistance ? "res-r" : r.k === o.support ? "sup-r" : "";
+          function k(v) { return v == null ? "—" : Math.abs(v) >= 100000 ? (v / 100000).toFixed(1) + "L" : Math.abs(v) >= 1000 ? (v / 1000).toFixed(1) + "K" : v; }
+          return "<tr class='" + c + "'><td>" + k(r.ce_oi) + "</td><td class='" + cls(r.ce_chg) + "-t'>" + k(r.ce_chg) + "</td><td>" + (r.ce_ltp == null ? "—" : r.ce_ltp) + "</td><td class='stk'>" + r.k + "</td><td>" + (r.pe_ltp == null ? "—" : r.pe_ltp) + "</td><td class='" + cls(r.pe_chg) + "-t'>" + k(r.pe_chg) + "</td><td>" + k(r.pe_oi) + "</td></tr>";
+        }).join("") + "</table></div>";
     }
+    var note = tx(aiPart, "note");
+    if (note) h += "<div class='muted' style='margin-top:8px'>" + t("aiView") + ": " + esc(note) + "</div>";
     return h + "</div>";
+  }
+
+  function sigChips(i) {
+    if (!i || !i.signals) return "";
+    var sn = t("sigN");
+    return "<div class='sigs'><div class='muted small'>" + t("sigT") + ":</div>" + Object.keys(sn).map(function (k) {
+      var v = i.signals[k] || 0;
+      return "<span class='sig " + cls(v) + "'>" + sn[k] + " " + (v > 0.05 ? "▲" : v < -0.05 ? "▼" : "●") + "</span>";
+    }).join("") + "<span class='sig'>score " + (i.score > 0 ? "+" : "") + i.score + "</span></div>";
+  }
+
+  /** the locked plan with its live follow-up */
+  function lockedCard(p) {
+    var c = p.opt === "CE" ? "pos" : "neg", n = p.name;
+    var live = p.last != null ? Math.round((p.last / p.premium - 1) * 1000) / 10 : 0;
+    var st = t("pst")[p.status] || p.status, done = !(p.status === "active" || p.status === "t1");
+    var h = "<div class='plan " + c + "'><div class='plan-t'>🔒 " + t("lockedT") + (p.expiryDay ? " <span class='badge neg'>" + t("expDayBadge") + "</span>" : "") + "</div>" +
+      "<div class='plan-ts'>🕒 " + t("planTime") + ": <b>" + fmtDT(p.date + "T00:00:00Z").split(", ")[0] + ", " + p.time + "</b> · " + t("spot") + " " + num(p.spot) +
+      "<br>📅 " + t("expL") + ": <b>" + esc(p.expiry) + "</b><br>🔄 " + t("lastChk") + ": " + (p.last_time || "—") + "</div>" +
+      "<div class='plan-big " + c + "-t'>" + (p.opt === "CE" ? "📈 " + t("buyCall") : "📉 " + t("buyPut")) + "</div>" +
+      "<div class='plan-grid'>" +
+      "<div><span>" + t("strikeL") + "</span><b>" + p.strike + " " + p.opt + "</b></div>" +
+      "<div><span>" + t("entryP") + "</span><b>₹" + p.premium + "</b></div>" +
+      "<div class='wide'><span>" + t("buyZone") + "</span><b>₹" + p.buy_low + " – ₹" + p.buy_high + "</b></div>" +
+      "<div><span>" + t("slL") + (p.status === "t1" ? " (" + t("atCost") + ")" : " (−" + p.sl_pct + "%)") + "</span><b class='neg-t'>₹" + p.sl + "</b></div>" +
+      "<div><span>" + t("t1L") + "</span><b class='pos-t'>₹" + p.t1 + "</b></div>" +
+      "<div><span>" + t("t2L") + "</span><b class='pos-t'>₹" + p.t2 + "</b></div>" +
+      "<div><span>" + esc(n) + " " + (p.opt === "CE" ? t("exitBelow") : t("exitAbove")) + "</span><b>" + (p.stop_level || "—") + "</b></div></div>";
+    h += "<div class='pstat " + (done ? (p.pnl > 0 ? "pos" : "neg") : "neu") + "'><div><b>" + st + "</b>" + (p.exit_time ? " · " + p.exit_time : p.t1_time ? " · T1 " + p.t1_time : "") + "</div>" +
+      "<div>" + t("nowPrem") + ": <b>₹" + (p.last == null ? "—" : p.last) + "</b> <span class='" + cls(live) + "-t'>(" + (live > 0 ? "+" : "") + live + "%)</span> · " + t("hiLo") + " ₹" + p.hi + " / ₹" + p.lo + "</div>" +
+      (done ? "<div>" + t("resultL") + ": <b class='" + cls(p.pnl) + "-t'>" + (p.pnl > 0 ? "+" : "") + p.pnl + "%</b> " + t("onPrem") + "</div><div class='muted small'>" + t("dayDone") + "</div>" : "") + "</div>";
+    h += "<ul class='steps'><li>" + t("lockRule") + "</li><li>" + (p.expiryDay ? t("exitBy") : t("exitBy2")) + "</li><li>" + t("zoneNote") + "</li></ul>";
+    return h + "</div>";
+  }
+  /** no locked plan: explain why, show the current reading only as information */
+  function waitCard(n, i, reason) {
+    var h = "<div class='plan neu'><div class='plan-t'>" + t("planT") + "</div><div class='plan-big neu-t'>⏸ " + reason + "</div>";
+    if (i && i.bias) h += "<div class='small muted'>" + t("nowReading") + ": " + t("bias")[i.bias] + " (score " + (i.score > 0 ? "+" : "") + i.score + ", " + t("needScore") + ")</div>";
+    return h + sigChips(i) + "</div>";
   }
 
   function renderFO(d) {
     var L = state.live, sel = L.sel, h = indexStrip(d) + "<div class='warn'>" + t("foWarn") + "</div>";
     var gh = d.options || {}, aiFo = (d.ai && d.ai.fo) || {};
-    h += "<div class='chips'>" + FO_KEYS.map(function (k) { return "<button class='chip " + (k === sel ? "on" : "") + "' data-fo='" + k + "'>" + FO_NAMES[k] + "</button>"; }).join("") + "</div>";
-    var lv = L.opt[sel], o = null, meta = null, ideaObj = null;
+    if (!marketOpen()) h += "<div class='closed-b'>🔒 " + t(isHolidayToday(d) ? "holidayToday" : "mktClosed") + (L.mkt && L.mkt.tradeDate ? " · " + t("lastSession") + ": " + esc(L.mkt.tradeDate) : "") + "</div>";
+    h += "<div class='chips'>" + FO_KEYS.map(function (k) {
+      var p = planOf(todayIST(), k);
+      return "<button class='chip " + (k === sel ? "on" : "") + "' data-fo='" + k + "'>" + FO_NAMES[k] + (p ? (p.opt === "CE" ? " 📈" : " 📉") : "") + "</button>";
+    }).join("") + "</div>";
+    var lv = L.opt[sel], o = null, meta = null, planHtml = "";
+    var locked = planOf(todayIST(), sel);
     if (lv) {
       o = lv;
       meta = { time: lv.time ? fmtDT(lv.time) + " (" + lv.source + ")" : fmtDT(lv.fetched_at), src: "🟢 " + t("srcLive") + lv.source + ")" };
-      var idxName = { nifty: "Nifty 50", banknifty: "Bank Nifty", finnifty: "Fin Nifty", midcpnifty: "Midcap Select", sensex: "Sensex", bankex: "BANKEX" }[sel];
-      var iq = (L.idx || {})[idxName];
-      ideaObj = LIVE.idea(lv, finalLabel(d), (aiFo[sel] || {}).bias, { pct: iq ? iq.pct : null });
-      logFoPlan(sel, lv, ideaObj, idxName);
+      var iq = (L.idx || {})[IDXN[sel]];
+      var ideaObj = LIVE.idea(lv, finalLabel(d), (aiFo[sel] || {}).bias, { pct: iq ? iq.pct : null });
+      if (!locked) locked = maybeLock(sel, lv, ideaObj);
+      if (locked) planHtml = lockedCard(locked);
+      else {
+        var m = nowMin(), reason;
+        if (!marketOpen()) reason = t("rsClosed");
+        else if (m < 9 * 60 + 30) reason = t("rsEarly");
+        else if (m > (ideaObj.expiryDay ? 13 * 60 + 30 : 14 * 60 + 30)) reason = t("rsLate");
+        else if (!(ideaObj.premium > 0) && ideaObj.action !== "WAIT") reason = t("rsNoPrem");
+        else reason = t("rsWeak");
+        planHtml = waitCard(lv.name, ideaObj, reason);
+      }
     } else if (gh[sel]) {
       o = gh[sel];
       meta = { time: fmtDT(o.fetched_at || d.generated_at) + (o.stale ? " ⏳" : ""), src: "🕒 " + t("srcGh") };
-      ideaObj = o.idea;
+      planHtml = locked ? lockedCard(locked) : waitCard(o.name, null, LIVE.available ? t("loadingOpt") : t("noLive"));
     }
     if (L.optLoading[sel]) h += "<div class='muted small' style='margin-bottom:8px'>⏳ " + t("loadingOpt") + "</div>";
     if (L.optErr[sel]) h += "<div class='err-inline'>⚠️ " + t("optErr") + ": " + esc(L.optErr[sel]) + (gh[sel] && !lv ? " — " + t("showingGh") : "") + "</div>";
     if (!LIVE.available && !o) h += "<div class='muted small'>" + t("noLive") + "</div>";
     if (sel === "sensex" || sel === "bankex") h += "<div class='muted small' style='margin-bottom:8px'>ℹ️ " + t("bseLiveNote") + "</div>";
-    if (o) h += foCard(o, aiFo[sel], ideaObj, meta);
+    if (o) h += foCard(o, aiFo[sel], planHtml, meta);
     else if (!L.optLoading[sel]) h += "<div class='empty'>" + t("foNoData") + "</div>";
     h += "<div class='muted small' style='margin:-4px 4px 12px'>" + t("autoNote") + " " + t("premNote") + "</div>";
     var st = aiFo.stocks || [];
@@ -845,7 +954,7 @@
         return "<div class='row' data-stock='" + esc(String(s.symbol).toUpperCase()) + "'><div class='l'><b>" + esc(s.symbol) + "</b><div class='muted small'>" + esc(tx(s, "reason")) + "</div></div><div class='r'><span class='badge " + c + "'>" + t("bias")[s.bias] + "</span></div></div>";
       }).join("") + "</div>";
     }
-    h += historyCard(d, "fo", t("foHist"));
+    h += planLogCard();
     return h + "<div class='disc'>" + t("disc") + "</div>";
   }
 
@@ -936,8 +1045,14 @@
   document.querySelectorAll(".tabs button").forEach(function (b) { b.onclick = function () { setTab(b.getAttribute("data-tab")); }; });
   function refreshLive(withOpt) {
     if (!LIVE.available) return;
+    LIVE.marketStatus().then(function (m) { state.live.mkt = m; state.live.mktTime = Date.now(); render(); }, function () {});
+    var hd = store("mm_holidays_day");
+    if (hd !== todayIST()) LIVE.holidays().then(function (h) { if (h.length) { store("mm_holidays", h); store("mm_holidays_day", todayIST()); } }, function () {});
+    // keep following today's locked plans even when another index is on screen
+    var mine = plansAll()[todayIST()] || {};
+    Object.keys(mine).forEach(function (k) { var p = mine[k]; if ((p.status === "active" || p.status === "t1") && k !== state.live.sel) loadOpt(k, p.expiry, true); });
     LIVE.indices().then(function (r) {
-      if (Object.keys(r.quotes).length) { state.live.idx = r.quotes; state.live.idxTime = r.time; evalFoLog(); }
+      if (Object.keys(r.quotes).length) { state.live.idx = r.quotes; state.live.idxTime = r.time; }
       state.live.idxErr = r.errors;
       if (state.tab === "home" || state.tab === "fo") render();
     }, function () {});
@@ -952,6 +1067,20 @@
       store("mm_fii_hist", h);
       if (state.tab === "home") render();
     }, function () {});
+  }
+  function isHolidayToday(d) {
+    var L = state.live;
+    if (L.mkt && marketHours() && !L.mkt.open) return true;
+    var hol = store("mm_holidays") || (d && d.holidays) || [];
+    var x = new Date(Date.now() + 5.5 * 3600000);
+    var key = ("0" + x.getUTCDate()).slice(-2) + "-" + ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][x.getUTCMonth()] + "-" + x.getUTCFullYear();
+    return hol.indexOf(key) >= 0 || !!(d && d.session && d.session.today_holiday);
+  }
+  function marketOpen() {
+    if (!marketHours()) return false;
+    var L = state.live;
+    if (L.mkt && L.mktTime && Date.now() - L.mktTime < 20 * 60000) return !!L.mkt.open;
+    return !isHolidayToday(state.data);
   }
   function marketHours() {
     var d = new Date(Date.now() + 5.5 * 3600000), m = d.getUTCHours() * 60 + d.getUTCMinutes();
@@ -986,7 +1115,7 @@
   };
   function renderHeaderOnly() {
     var d = state.data;
-    var old = marketHours() && (Date.now() - new Date(d.generated_at).getTime()) > 40 * 60000;
+    var old = marketOpen() && (Date.now() - new Date(d.generated_at).getTime()) > 40 * 60000;
     $("updated").textContent = (state.live.idxTime ? "🟢 " + t("liveAt") + " " + fmtDT(state.live.idxTime).split(", ")[1] + " · " + t("newsAi") + " " + ago(d.generated_at) : t("updated") + ": " + ago(d.generated_at)) + (old ? " ⚠️" : "");
   }
   setInterval(function () { if (state.data) renderHeaderOnly(); }, 60000);

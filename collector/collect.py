@@ -776,20 +776,51 @@ def collect_fii_dii():
 # --------------------------------------------------------------------------
 # Rule based outlook
 # --------------------------------------------------------------------------
+HOLIDAYS = set()   # trading holidays as date objects (filled from NSE holiday-master, kept in latest.json)
+
+
+def is_trading_day(d):
+    return d.weekday() < 5 and d not in HOLIDAYS
+
+
 def next_weekday(d):
     d = d + timedelta(days=1)
-    while d.weekday() >= 5:
+    while not is_trading_day(d):
         d += timedelta(days=1)
     return d
 
 
 def target_session(now_ist):
     t = now_ist.hour * 60 + now_ist.minute
-    if now_ist.weekday() < 5 and t < 9 * 60 + 15:
-        return now_ist.date(), "pre"
-    if now_ist.weekday() < 5 and t < 15 * 60 + 30:
-        return now_ist.date(), "live"
-    return next_weekday(now_ist.date()), "closed"
+    today = now_ist.date()
+    if is_trading_day(today) and t < 9 * 60 + 15:
+        return today, "pre"
+    if is_trading_day(today) and t < 15 * 60 + 30:
+        return today, "live"
+    return next_weekday(today), "closed"
+
+
+def collect_holidays(prev):
+    """NSE trading holidays; falls back to the list saved in the previous run."""
+    out = set(prev.get("holidays") or [])
+    try:
+        r = nse_session().get("https://www.nseindia.com/api/holiday-master", params={"type": "trading"}, timeout=15)
+        r.raise_for_status()
+        js = r.json()
+        for seg, rows in (js or {}).items():
+            if isinstance(rows, list) and seg in ("CM", "FO"):
+                for h in rows:
+                    if h.get("tradingDate"):
+                        out.add(h["tradingDate"])
+    except Exception as e:
+        log("holidays failed", e)
+    days = set()
+    for x in out:
+        try:
+            days.add(datetime.strptime(x, "%d-%b-%Y").date())
+        except Exception:
+            pass
+    return sorted(out), days
 
 
 def fmt_pct(p):
@@ -1355,6 +1386,13 @@ def update_ledger(prev, outlook, ai, markets, session, phase, now_ist):
         e = led.get(key, {})
         ref = n["price"] if n else None
         # GIFT Nifty move since the Indian close = the expected opening gap
+        if not e.get("gift_ref"):   # a holiday in between: keep the reference taken at the last real close
+            for k in sorted(led, reverse=True):
+                if k < key and led[k].get("gift_ref") and not led[k].get("actual"):
+                    e["gift_ref"] = led[k]["gift_ref"]
+                    break
+                if k < key:
+                    break
         if gift and gift.get("price") and not e.get("gift_ref"):
             e["gift_ref"] = gift["price"]
         gap = ((gift["price"] / e["gift_ref"] - 1) * 100) if (gift and gift.get("price") and e.get("gift_ref")) else None
@@ -1367,10 +1405,16 @@ def update_ledger(prev, outlook, ai, markets, session, phase, now_ist):
             f["range_lo"], f["range_hi"] = round(center * (1 - sigma / 100)), round(center * (1 + sigma / 100))
         e["forecast"] = f
         led[key] = e
+    for k in list(led):
+        try:
+            if datetime.strptime(k, "%Y-%m-%d").date() in HOLIDAYS and not led[k].get("actual"):
+                led[k]["holiday"] = True
+        except Exception:
+            pass
     # record what actually happened today (after the close)
     today = str(now_ist.date())
     t = now_ist.hour * 60 + now_ist.minute
-    if n and today in led and "actual" not in led[today] and now_ist.weekday() < 5 and t >= 15 * 60 + 35:
+    if n and today in led and "actual" not in led[today] and is_trading_day(now_ist.date()) and t >= 15 * 60 + 35:
         f = led[today].get("forecast") or {}
         a = {"close": n["price"], "close_pct": n["pct"], "high": n.get("high"), "low": n.get("low"), "open": n.get("open")}
         if n.get("open") and n.get("prev"):
@@ -1391,7 +1435,7 @@ def update_ledger(prev, outlook, ai, markets, session, phase, now_ist):
 
 
 def ledger_stats(led):
-    done = [v for k, v in sorted(led.items()) if v.get("actual")]
+    done = [v for k, v in sorted(led.items()) if v.get("actual") and not v.get("holiday")]
 
     def summ(rows):
         out = {"n": len(rows)}
@@ -1453,6 +1497,8 @@ def main():
     stocks, sector_kw = build_matchers(stocks_cfg)
 
     now_ist = now_utc().astimezone(IST)
+    hol_list, hol_days = collect_holidays(prev)
+    HOLIDAYS.update(hol_days)
     session, phase = target_session(now_ist)
 
     news, feed_status = collect_news(sources, prev, stocks, sector_kw)
@@ -1484,7 +1530,8 @@ def main():
         "app": "M-Market",
         "schema": 2,
         "generated_at": now_utc().isoformat(),
-        "session": {"date": str(session), "phase": phase},
+        "session": {"date": str(session), "phase": phase, "today_holiday": now_ist.date() in HOLIDAYS},
+        "holidays": hol_list,
         "outlook": outlook,
         "ai": ai,
         "ai_status": ai_status,
